@@ -3,7 +3,9 @@
 Each step rotates the magnetization about the effective field,
 ``Rz(φ)·Ry(θ)·Rz(α)·Ry(−θ)·Rz(−φ)`` with ``θ = atan2(Ω, Δ)`` and
 ``α = 2π·sqrt(Ω² + Δ²)·dt``, i.e. a right-handed rotation by ``+α`` about
-``n = (sinθ cosφ, sinθ sinφ, cosθ)``. All offsets are rotated at once.
+``n = (sinθ cosφ, sinθ sinφ, cosθ)``. The rotation is applied through its exact SU(2)
+propagator ``exp(−i(α/2)·n·σ) = cos(α/2)·I − i·sin(α/2)·n·σ``, held as the unit quaternion
+``(cos(α/2), sin(α/2)·n)``. All offsets are rotated at once.
 """
 
 from __future__ import annotations
@@ -72,29 +74,33 @@ class Trajectory:
         return self.m[-1]
 
 
-def _rotate(
-    m: np.ndarray, amp: float, phase: np.ndarray | float, offsets: np.ndarray, dt: float
-) -> np.ndarray:
-    """Apply one step to ``m`` of shape ``(..., n_off, 3)``.
+def _step(
+    amp: np.ndarray | float, phase: np.ndarray | float, offsets: np.ndarray, dt: float
+) -> tuple[np.ndarray, ...]:
+    """SU(2) propagator ``w·I − i(x·σx + y·σy + z·σz)`` of one step, as ``(w, x, y, z)``.
 
-    ``amp`` in Hz, ``phase`` in rad (scalar or broadcastable to ``(..., n_off)``),
-    ``offsets`` in Hz, ``dt`` in s. Rodrigues' formula:
-    ``M' = M cosα + (n × M) sinα + n (n·M)(1 − cosα)``.
+    ``amp`` in Hz, ``phase`` in rad, ``offsets`` in Hz, ``dt`` in s, all broadcastable.
+    ``(x, y, z) = sin(α/2)/|ω| · (amp cosφ, amp sinφ, Δ)``; ``np.sinc`` gives
+    ``sin(α/2)/|ω|``, so a step with no field is exactly the identity.
     """
-    alpha = 2 * np.pi * np.hypot(amp, offsets) * dt
-    theta = np.arctan2(amp, offsets)
-    sin_t, nz = np.sin(theta), np.cos(theta)
-    nx, ny = sin_t * np.cos(phase), sin_t * np.sin(phase)
-    mx, my, mz = m[..., 0], m[..., 1], m[..., 2]
-    ca, sa = np.cos(alpha), np.sin(alpha)
-    k = (nx * mx + ny * my + nz * mz) * (1 - ca)
-    return np.stack(
-        [
-            mx * ca + (ny * mz - nz * my) * sa + nx * k,
-            my * ca + (nz * mx - nx * mz) * sa + ny * k,
-            mz * ca + (nx * my - ny * mx) * sa + nz * k,
-        ],
-        axis=-1,
+    field = np.hypot(amp, offsets)
+    s = np.pi * dt * np.sinc(field * dt)
+    sxy = s * amp
+    return np.cos(np.pi * field * dt), sxy * np.cos(phase), sxy * np.sin(phase), s * offsets
+
+
+def _rotate(q: tuple[np.ndarray, ...], m: tuple[np.ndarray, ...]) -> tuple[np.ndarray, ...]:
+    """Rotate ``m = (mx, my, mz)`` by the unit quaternion ``q = (w, x, y, z)``.
+
+    With ``u = (x, y, z)`` and ``t = 2·u × m``: ``m' = m + w·t + u × t``.
+    """
+    w, x, y, z = q
+    mx, my, mz = m
+    tx, ty, tz = 2 * (y * mz - z * my), 2 * (z * mx - x * mz), 2 * (x * my - y * mx)
+    return (
+        mx + w * tx + (y * tz - z * ty),
+        my + w * ty + (z * tx - x * tz),
+        mz + w * tz + (x * ty - y * tx),
     )
 
 
@@ -155,14 +161,13 @@ def _propagate(
     receiver = -np.deg2rad(phase_cycle.receiver_deg)[:, None]
     rec_cos, rec_sin = np.cos(receiver), np.sin(receiver)
 
-    def observed(batch: np.ndarray) -> np.ndarray:
-        x, y = batch[..., 0], batch[..., 1]
-        rotated = np.stack(
-            [x * rec_cos - y * rec_sin, x * rec_sin + y * rec_cos, batch[..., 2]], -1
-        )
+    def observed(state: tuple[np.ndarray, ...]) -> np.ndarray:
+        x, y, z = state
+        rotated = np.stack([x * rec_cos - y * rec_sin, x * rec_sin + y * rec_cos, z], -1)
         return rotated.mean(axis=0)
 
-    current = np.broadcast_to(m0, (receiver.shape[0], offsets.size, 3)).copy()
+    # Components kept as separate (n_cycle, n_off) arrays: contiguous, no per-step stack.
+    current = tuple(np.full((receiver.shape[0], offsets.size), c) for c in m0)
     if record:
         dts = np.concatenate([np.full(s.n_steps, s.dt) for s in sequence])
         t = np.concatenate([[0.0], np.cumsum(dts)])
@@ -174,7 +179,7 @@ def _propagate(
         offs = _segment_offsets(seg, offsets)
         segments.append((seg.name, k, k + seg.n_steps))
         for amp, phase in zip(seg.amp, seg.phase):
-            current = _rotate(current, amp * b1, phase + pulse_phases[:, i], offs, seg.dt)
+            current = _rotate(_step(amp * b1, phase + pulse_phases[:, i], offs, seg.dt), current)
             k += 1
             if record:
                 m[k] = observed(current)
