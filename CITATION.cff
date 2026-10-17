@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: Nutate
+abstract: Bloch simulations of RF pulse sequences rendered as 3D Bloch-sphere videos.
+authors:
+  - family-names: Foroozandeh
+    given-names: Mohammadali
+license: Apache-2.0
+repository-code: https://github.com/mforoozandeh/nutate
+version: 0.1.0.dev0

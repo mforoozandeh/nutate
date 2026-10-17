@@ -1,0 +1,9 @@
+output/
+.venv/
+__pycache__/
+*.egg-info
+.idea/
+.DS_Store
+.superpowers/
+dist/
+build/

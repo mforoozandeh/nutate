@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nutate"
+version = "0.1.0.dev0"
+description = "Bloch simulations of RF pulse sequences rendered as 3D Bloch-sphere videos"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Mohammadali Foroozandeh" }]
+dependencies = [
+    "numpy>=1.24",
+    "pyvista>=0.44",
+    "matplotlib>=3.10",
+    "imageio>=2.31",
+    "imageio-ffmpeg>=0.6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.hatch.build.targets.sdist]
+# Media, renders and agent workspace stay out.
+exclude = ["/.superpowers", "/docs", "/output"]
+
+[tool.pytest.ini_options]
+markers = ["render: needs an off-screen OpenGL context"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["nutate._scene.Style", "nutate._scene.Camera"]
