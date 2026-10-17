@@ -13,8 +13,10 @@ from nutate.pulses import (
     hs,
     q_factor,
     read_bruker_shape,
+    waveform,
 )
 from nutate.render import Camera, Style, render, show, snapshot
+from nutate.run import RunResult, run
 from nutate.simulate import PhaseCycle, Trajectory, simulate, simulate_final
 
 __all__ = [
@@ -23,6 +25,7 @@ __all__ = [
     "B1Map",
     "Camera",
     "PhaseCycle",
+    "RunResult",
     "Segment",
     "Style",
     "Trajectory",
@@ -43,8 +46,10 @@ __all__ = [
     "q_factor",
     "read_bruker_shape",
     "render",
+    "run",
     "show",
     "simulate",
     "simulate_final",
     "snapshot",
+    "waveform",
 ]

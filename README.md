@@ -44,6 +44,24 @@ Useful `render` options:
 time slider. `nt.plot_profiles(traj)` and `nt.plot_map(traj)` make the 2D excitation
 profile and time–offset map plots.
 
+### Your own waveform
+
+`nt.waveform` turns a waveform normalised to 1 (amplitude and phase, or I and Q) into a
+pulse; `rabi` is the Rabi frequency in Hz at waveform value 1, or `t90` the hard 90° pulse
+length (`rabi = 1/(4·t90)`). `nt.run` then writes the video and/or the B1 figures:
+
+```python
+p1 = nt.waveform(amp, phase, duration=2e-3, rabi=15e3)        # or phase_deg=...
+p2 = nt.waveform(i=I, q=Q, duration=1e-3, t90=10e-6)
+
+result = nt.run([p1, p2], bandwidth=300e3, b1=True, out="output", name="my_pulse")
+# output/my_pulse.mp4, my_pulse_b1_map.png, my_pulse_b1_surface.png, my_pulse_b1_phase.png
+```
+
+Pulses in a list play back to back. `video=False` skips the video, `video_options` go to
+`nt.render`, and `component="z"` maps −Mz (inversion) instead of −My. `result` holds the
+trajectory, the B1 map and the files written.
+
 ### B1 robustness
 
 ```python

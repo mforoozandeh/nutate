@@ -12,6 +12,7 @@ from nutate import (
     q_factor,
     read_bruker_shape,
     simulate,
+    waveform,
 )
 
 
@@ -210,3 +211,61 @@ def test_hs_sweeps_bandwidth():
     freq = np.gradient(s.phase, np.linspace(-T / 2, T / 2, 2001)) / (2 * np.pi)
     assert freq[-1] == pytest.approx(bw / 2 * np.tanh(5.3), rel=1e-3)
     assert freq[0] == pytest.approx(-bw / 2 * np.tanh(5.3), rel=1e-3)
+
+
+def test_waveform_scales_by_rabi_without_rescaling():
+    s = waveform([0.5, 1.05], [0.0, np.pi / 2], duration=2e-6, rabi=1e4, name="w")
+    np.testing.assert_allclose(s.amp, [5e3, 10.5e3])  # overshoot above 1 kept, not clipped
+    np.testing.assert_allclose(s.phase, [0.0, np.pi / 2])
+    assert s.dt == pytest.approx(1e-6)
+    assert s.name == "w"
+
+
+def test_waveform_t90_gives_rabi():  # ν1 = 1/(4·t90): a unit waveform lasting t90 is a 90°
+    s = waveform(np.ones(10), np.zeros(10), duration=10e-6, t90=10e-6)
+    np.testing.assert_allclose(simulate([s], [0.0]).final[0], [0, -1, 0], atol=1e-9)
+
+
+def test_waveform_iq_puts_q_along_y():
+    s = waveform(i=np.zeros(10), q=np.ones(10), duration=10e-6, t90=10e-6)
+    np.testing.assert_allclose(simulate([s], [0.0]).final[0], [1, 0, 0], atol=1e-9)
+
+
+def test_waveform_iq_amplitude_and_phase():
+    s = waveform(i=[1.0, 0.0, -0.6], q=[0.0, 0.5, 0.8], duration=3e-6, rabi=1e4)
+    np.testing.assert_allclose(s.amp, [1e4, 5e3, 1e4])
+    np.testing.assert_allclose(s.phase, [0.0, np.pi / 2, np.arctan2(0.8, -0.6)])
+
+
+def test_waveform_phase_deg():
+    s = waveform([1.0, 1.0], phase_deg=[90.0, 180.0], duration=2e-6, rabi=1e4)
+    np.testing.assert_allclose(s.phase, [np.pi / 2, np.pi])
+
+
+def test_waveform_negative_amplitude_flips_phase():
+    s = waveform([-0.5, 0.5], [0.25, 0.25], duration=2e-6, rabi=1e4)
+    np.testing.assert_allclose(s.amp, [5e3, 5e3])
+    np.testing.assert_allclose(s.phase, [0.25 + np.pi, 0.25])
+
+
+@pytest.mark.parametrize(
+    "kwargs, match",
+    [
+        ({"amp": [2.0], "phase": [0.0]}, "normalised"),
+        ({"amp": [1.0], "phase": [0.0], "i": [1.0], "q": [0.0]}, "either"),
+        ({}, "either"),
+        ({"i": [1.0]}, "i and q"),
+        ({"amp": [1.0]}, "phase"),
+        ({"amp": [1.0], "phase": [0.0], "phase_deg": [0.0]}, "phase"),
+        ({"amp": [1.0, 1.0], "phase": [0.0]}, "shape"),
+        ({"i": [1.0, 1.0], "q": [0.0]}, "shape"),
+        ({"amp": [1.0], "phase": [0.0], "rabi": None}, "rabi"),
+        ({"amp": [1.0], "phase": [0.0], "t90": 1e-6}, "rabi"),
+        ({"amp": [1.0], "phase": [0.0], "rabi": -1.0}, "rabi"),
+        ({"amp": [1.0], "phase": [0.0], "rabi": None, "t90": 0.0}, "t90"),
+    ],
+)
+def test_waveform_validation(kwargs, match):
+    kwargs = {"rabi": 1e4, **kwargs}
+    with pytest.raises(ValueError, match=match):
+        waveform(**kwargs, duration=1e-6)
