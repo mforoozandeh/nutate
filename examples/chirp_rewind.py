@@ -5,23 +5,20 @@ offset Δ·(Δ/(2·bw) − 1/2), which refocuses the chirp's offset-dependent ph
 across ±2 kHz.
 """
 
-from _common import parse_args, report, run_options
-
 import nutate as nt
 
 BANDWIDTH = 20e3
 
 
 def main() -> None:
-    args = parse_args(__doc__)
     sequence = [
         nt.chirp(10e-3, BANDWIDTH, 500, smoothing=10),
         nt.delay(10e-3, 500, name="rewind", offset_fn=lambda d: d * (d / (2 * BANDWIDTH) - 0.5)),
     ]
     result = nt.run(
-        sequence, 4e3, name="chirp_rewind", still=True, **run_options(args, duration=14)
+        sequence, 4e3, name="chirp_rewind", still=True, out="output", video_options={"duration": 14}
     )
-    report(result)
+    print(*result.files, sep="\n")
 
 
 if __name__ == "__main__":

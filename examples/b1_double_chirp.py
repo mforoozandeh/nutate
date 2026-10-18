@@ -7,7 +7,6 @@ surface and the on-resonance phase sensitivity. Illustrative parameters: T = 1 m
 """
 
 import numpy as np
-from _common import parse_args, report, run_options
 
 import nutate as nt
 
@@ -15,7 +14,6 @@ T, BANDWIDTH, N = 1e-3, 300e3, 1000
 
 
 def main() -> None:
-    args = parse_args(__doc__)
     rabi = np.sqrt(T / 2 * BANDWIDTH * 5 / (2 * np.pi)) / (T / 2)
     sequence = [
         nt.chirp(T, BANDWIDTH, N, smoothing=5).with_rabi(rabi / 4.75),
@@ -34,9 +32,9 @@ def main() -> None:
         b1=True,
         sign=1,
         phase_cycle=cycle,
-        **run_options(args),
+        out="output",
     )
-    report(result)
+    print(*result.files, sep="\n")
 
 
 if __name__ == "__main__":

@@ -6,15 +6,12 @@ surface and the on-resonance phase sensitivity. Illustrative parameters: 1 ms, 3
 1000 steps.
 """
 
-from _common import parse_args, report, run_options
-
 import nutate as nt
 
 T, BANDWIDTH, N = 1e-3, 300e3, 1000
 
 
 def main() -> None:
-    args = parse_args(__doc__)
     pulse = nt.chirp(T, BANDWIDTH, N, smoothing=5, q=5)
     result = nt.run(
         pulse.with_rabi(pulse.rabi / 3.3588),
@@ -24,9 +21,10 @@ def main() -> None:
         b1=True,
         rf_ref=pulse.rabi,
         # 1000 offsets as in the original script: ~120 phase cycles across the band alias at 101.
-        **run_options(args, b1_offsets=1000),
+        b1_offsets=1000,
+        out="output",
     )
-    report(result)
+    print(*result.files, sep="\n")
 
 
 if __name__ == "__main__":

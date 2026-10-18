@@ -1,33 +1,44 @@
-import os
-import subprocess
+import runpy
 import sys
 from pathlib import Path
 
+import numpy as np
 import pytest
 
+import nutate as nt
+
 EXAMPLES_DIR = Path(__file__).parent.parent / "examples"
-EXAMPLES = sorted(p for p in EXAMPLES_DIR.glob("*.py") if not p.name.startswith("_"))
+EXAMPLES = sorted(EXAMPLES_DIR.glob("*.py"))
 
 
 @pytest.mark.render
 @pytest.mark.parametrize("script", EXAMPLES, ids=lambda p: p.stem)
-def test_example_runs(script, tmp_path):
-    extra = []
+def test_example_runs(script, tmp_path, monkeypatch):
+    argv = []
     if script.stem == "bruker_shape":
         shape = tmp_path / "shape.txt"
         shape.write_text("##XYPOINTS= (XY..XY)\n" + "100.0, 0.0\n" * 50 + "##END=\n")
-        extra = [str(shape), "1e-3", "250"]
-    subprocess.run(
-        [sys.executable, str(script), *extra, "--quick", "--out", str(tmp_path)],
-        check=True,
-        env={**os.environ, "MPLBACKEND": "Agg"},
-    )
+        argv = [str(shape), "1e-3", "250"]
+    real_run = nt.run
+
+    def quick_run(*args, **kwargs):  # tiny, short renders and an 11 × 11 B1 grid
+        video_options = kwargs.pop("video_options", None) or {}
+        kwargs.update(b1_offsets=11, b1_scales=np.linspace(0.5, 1.5, 11))
+        video_options = {**video_options, "duration": 0.5, "hold": 0, "size": (320, 240)}
+        return real_run(*args, video_options=video_options, **kwargs)
+
+    monkeypatch.setattr(nt, "run", quick_run)
+    monkeypatch.setattr(sys, "argv", [script.name, *argv])
+    monkeypatch.chdir(tmp_path)
+    runpy.run_path(str(script), run_name="__main__")
+
+    out = tmp_path / "output"
     if script.stem.startswith("b1_") or script.stem == "waveform":
         for suffix in ("map", "surface", "phase"):
-            assert (tmp_path / f"{script.stem}_b1_{suffix}.png").exists()
+            assert (out / f"{script.stem}_b1_{suffix}.png").exists()
     if not script.stem.startswith("b1_"):  # B1 robustness examples write no video
-        assert (tmp_path / f"{script.stem}.mp4").exists()
-        assert (tmp_path / f"{script.stem}.png").exists()
+        assert (out / f"{script.stem}.mp4").exists()
+        assert (out / f"{script.stem}.png").exists()
 
 
 def test_all_examples_present():
@@ -91,7 +102,7 @@ def _captured_run(monkeypatch, tmp_path, stem, *argv):
         return nt.RunResult(None, None, None, [])
 
     monkeypatch.setattr(nt, "run", fake_run)
-    monkeypatch.setattr(sys, "argv", [stem, *argv, "--out", str(tmp_path)])
+    monkeypatch.setattr(sys, "argv", [stem, *argv])
     example.main()
     return example, seen
 

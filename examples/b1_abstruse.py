@@ -7,7 +7,6 @@ the on-resonance phase sensitivity. Illustrative parameters: T = 1 ms, 300 kHz, 
 """
 
 import numpy as np
-from _common import parse_args, report, run_options
 
 import nutate as nt
 
@@ -15,7 +14,6 @@ T, BANDWIDTH, N = 1e-3, 300e3, 1000
 
 
 def main() -> None:
-    args = parse_args(__doc__)
     rf = [k * np.sqrt(BANDWIDTH / d) for k, d in ((0.61, T), (1.83, T), (1.93, T / 2))]
     sequence = [
         nt.hs(T, BANDWIDTH, N, rabi=rf[0]),
@@ -31,9 +29,9 @@ def main() -> None:
         b1=True,
         sign=1,
         phase_cycle=nt.CHORUS_CYCLE,
-        **run_options(args),
+        out="output",
     )
-    report(result)
+    print(*result.files, sep="\n")
 
 
 if __name__ == "__main__":

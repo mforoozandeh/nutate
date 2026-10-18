@@ -8,7 +8,6 @@ and the B1 figures. Illustrative parameters: 200 µs, 512 points, excitation cen
 """
 
 import numpy as np
-from _common import parse_args, report, run_options
 
 import nutate as nt
 
@@ -26,13 +25,18 @@ def gaussian_90(duration: float, n: int, shift: float):
 
 
 def main() -> None:
-    args = parse_args(__doc__)
     i, q, duration, rabi = gaussian_90(T, N, SHIFT)
     pulse = nt.waveform(i=i, q=q, duration=duration, rabi=rabi, name="Gaussian 90°")
     result = nt.run(
-        pulse, 20e3, name="waveform", still=True, b1=True, **run_options(args, inset_phase=True)
+        pulse,
+        20e3,
+        name="waveform",
+        still=True,
+        b1=True,
+        out="output",
+        video_options={"inset_phase": True},
     )
-    report(result)
+    print(*result.files, sep="\n")
 
 
 if __name__ == "__main__":

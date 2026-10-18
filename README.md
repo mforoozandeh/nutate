@@ -105,8 +105,9 @@ CHORUS-like sequence.
 
 Each script generates its pulses and passes them to `nt.run`. Video scripts write
 `output/<name>.mp4` and `.png`; the `b1_*` scripts (and `waveform.py`) write
-`output/<name>_b1_map.png`, `_b1_surface.png` and `_b1_phase.png`. `--show` and `--out DIR`
-work for all of them; `--theme dark` for the videos.
+`output/<name>_b1_map.png`, `_b1_surface.png` and `_b1_phase.png`. To change what they
+produce, edit the `nt.run` call: `show=True` for interactive windows, `out=` for another
+folder, `video_options={"style": nt.Style(theme="dark")}` for a dark video.
 
 | Example | Shows |
 |---|---|

@@ -7,7 +7,6 @@ Illustrative parameters: T = 1 ms, 300 kHz, 1000 steps.
 """
 
 import numpy as np
-from _common import parse_args, report, run_options
 
 import nutate as nt
 
@@ -27,7 +26,6 @@ def sequence(correction=None) -> list[nt.Segment]:
 
 
 def main() -> None:
-    args = parse_args(__doc__)
     correction = nt.phase_correction(
         sequence(), BANDWIDTH, phase_cycle=nt.CHORUS_CYCLE, degree=10, n_offsets=100
     )
@@ -38,9 +36,9 @@ def main() -> None:
         video=False,
         b1=True,
         phase_cycle=nt.CHORUS_CYCLE,
-        **run_options(args),
+        out="output",
     )
-    report(result)
+    print(*result.files, sep="\n")
 
 
 if __name__ == "__main__":

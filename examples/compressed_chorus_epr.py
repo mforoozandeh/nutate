@@ -12,7 +12,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from _common import parse_args, report, run_options
 
 import nutate as nt
 
@@ -31,10 +30,9 @@ def phase_paths(sequence: list[nt.Segment], offsets: np.ndarray) -> tuple[np.nda
 
 
 def main() -> None:
-    args = parse_args(__doc__)
     correction = nt.chorus_phase_correction(T90, T180, BANDWIDTH, DT, degree=4)
     sequence = nt.chorus(T90, T180, BANDWIDTH, DT, phase_correction_deg=correction)
-    out = Path(args.out)
+    out = Path("output")
     out.mkdir(parents=True, exist_ok=True)
 
     with_delay = [*sequence, nt.delay(T90, sequence[0].n_steps)]
@@ -60,9 +58,10 @@ def main() -> None:
         offsets=np.linspace(-0.1 * BANDWIDTH, 0.3 * BANDWIDTH, 5),
         name="compressed_chorus_epr",
         still=True,
-        **run_options(args, duration=12),
+        out="output",
+        video_options={"duration": 12},
     )
-    report(result)
+    print(*result.files, sep="\n")
 
 
 if __name__ == "__main__":
