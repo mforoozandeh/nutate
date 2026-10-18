@@ -1,15 +1,17 @@
 """Pulse sequence building blocks.
 
-Every pulse or delay is a :class:`Segment`: a train of piecewise-constant steps, each
-with an RF amplitude (Hz) and RF phase (rad) held for ``dt`` seconds. A sequence is a
-plain ``list[Segment]``.
+Every pulse or delay is a :class:`Segment`: a waveform normalised to 1 and its Rabi
+frequency, i.e. a train of piecewise-constant steps, each with an amplitude (in units of
+the Rabi frequency) and RF phase (rad) held for ``dt`` seconds. The builders here generate
+segments; :func:`waveform` makes one from your own arrays. A sequence is a plain
+``list[Segment]``.
 """
 
 from __future__ import annotations
 
 import os
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import numpy as np
@@ -23,9 +25,11 @@ class Segment:
     Parameters
     ----------
     name : label shown in videos (e.g. ``"90° chirp"``).
-    amp : RF amplitude per step, Hz, ≥ 0.
+    amp : waveform per step, normalised to 1 (≥ 0; a peak above 1.5 is an error).
     phase : RF phase per step, rad.
     dt : step duration, s, > 0.
+    rabi : Rabi frequency ν1, Hz, at waveform value 1 (≥ 0); the RF amplitude is
+        ``amp · rabi``.
     offset_fn : optional map applied to the offsets (Hz) while this segment runs;
         ``None`` keeps them unchanged.
     """
@@ -34,6 +38,7 @@ class Segment:
     amp: np.ndarray
     phase: np.ndarray
     dt: float
+    rabi: float
     offset_fn: Callable[[np.ndarray], np.ndarray] | None = None
 
     def __post_init__(self) -> None:
@@ -45,13 +50,20 @@ class Segment:
             raise ValueError(f"phase shape {phase.shape} must match amp shape {amp.shape}")
         if not np.isfinite(amp).all() or (amp < 0).any():
             raise ValueError("amp must be finite and ≥ 0")
+        if amp.max() > 1.5:
+            raise ValueError(
+                f"amp peak is {amp.max():g}; it must be normalised to 1 (rabi sets the Hz)"
+            )
         if not np.isfinite(phase).all():
             raise ValueError("phase must be finite")
         if not (np.isfinite(self.dt) and self.dt > 0):
             raise ValueError(f"dt must be a positive number of seconds, got {self.dt}")
+        if not (np.isfinite(self.rabi) and self.rabi >= 0):
+            raise ValueError(f"rabi must be a frequency ≥ 0 in Hz, got {self.rabi}")
         object.__setattr__(self, "amp", amp)
         object.__setattr__(self, "phase", phase)
         object.__setattr__(self, "dt", float(self.dt))
+        object.__setattr__(self, "rabi", float(self.rabi))
 
     @property
     def n_steps(self) -> int:
@@ -61,12 +73,14 @@ class Segment:
     def duration(self) -> float:
         return self.n_steps * self.dt
 
-    def with_peak(self, peak_hz: float) -> Segment:
-        """Copy with the amplitude rescaled so its maximum is ``peak_hz`` (shape kept)."""
-        top = self.amp.max()
-        if top == 0:
-            raise ValueError(f"segment {self.name!r} has no RF (amp is all zero) to rescale")
-        return Segment(self.name, self.amp * (peak_hz / top), self.phase, self.dt, self.offset_fn)
+    @property
+    def rf(self) -> np.ndarray:
+        """RF amplitude per step, Hz: ``amp · rabi``."""
+        return self.amp * self.rabi
+
+    def with_rabi(self, rabi: float) -> Segment:
+        """Copy with Rabi frequency ``rabi`` Hz (waveform kept)."""
+        return replace(self, rabi=rabi)
 
 
 def hard(
@@ -79,14 +93,14 @@ def hard(
 ) -> Segment:
     """Rectangular pulse of ``duration`` s giving ``flip_deg`` on resonance.
 
-    Amplitude is ``flip_deg / (360 · duration)`` Hz, split into ``n_steps`` equal steps.
+    Rabi frequency ``flip_deg / (360 · duration)`` Hz, split into ``n_steps`` equal steps.
     """
-    amp = flip_deg / (360.0 * duration)
     return Segment(
         name,
-        np.full(n_steps, amp),
+        np.ones(n_steps),
         np.full(n_steps, np.deg2rad(phase_deg)),
         duration / n_steps,
+        flip_deg / (360.0 * duration),
     )
 
 
@@ -97,8 +111,8 @@ def delay(
     name: str = "delay",
     offset_fn: Callable[[np.ndarray], np.ndarray] | None = None,
 ) -> Segment:
-    """Free precession for ``duration`` s in ``n_steps`` equal steps (RF off)."""
-    return Segment(name, np.zeros(n_steps), np.zeros(n_steps), duration / n_steps, offset_fn)
+    """Free precession for ``duration`` s in ``n_steps`` equal steps (RF off, ``rabi = 0``)."""
+    return Segment(name, np.zeros(n_steps), np.zeros(n_steps), duration / n_steps, 0.0, offset_fn)
 
 
 def q_factor(flip_deg: float) -> float:
@@ -132,7 +146,7 @@ def chirp(
     """Linear frequency sweep from ``−bandwidth/2`` to ``+bandwidth/2`` Hz.
 
     ``duration`` in s, ``n_steps`` samples, ``smoothing`` = % of samples at each end
-    shaped by a quarter-sine ramp. Peak amplitude ``sqrt(duration·bandwidth·q/(2π))/duration``
+    shaped by a quarter-sine ramp. Rabi frequency ``sqrt(duration·bandwidth·q/(2π))/duration``
     Hz. ``phase_correction_deg`` (one value per step, degrees) is added to the phase.
     """
     if n_steps < 2:
@@ -157,8 +171,8 @@ def chirp(
         ramp = np.sin(np.linspace(0, np.pi / 2, n_ramp))
         envelope[:n_ramp] = ramp
         envelope[-n_ramp:] = ramp[::-1]
-    peak = np.sqrt(duration * bandwidth * q / (2 * np.pi)) / duration
-    return Segment(name, peak * envelope, phase, duration / n_steps)
+    rabi = np.sqrt(duration * bandwidth * q / (2 * np.pi)) / duration
+    return Segment(name, envelope, phase, duration / n_steps, rabi)
 
 
 def hs(
@@ -166,14 +180,14 @@ def hs(
     bandwidth: float,
     n_steps: int,
     *,
-    rf_max_hz: float,
+    rabi: float,
     phase_deg: float = 0.0,
     truncation: float = 10.6,
     name: str = "HS pulse",
 ) -> Segment:
     """Hyperbolic-secant pulse sweeping ``±bandwidth/2`` Hz over ``duration`` s.
 
-    Amplitude ``rf_max_hz · sech(β·t)`` and phase ``phase_deg + (π·bandwidth/β)·ln cosh(β·t)``
+    Waveform ``sech(β·t)`` at Rabi frequency ``rabi`` Hz and phase ``phase_deg + (π·bandwidth/β)·ln cosh(β·t)``
     for ``t`` in ``[−duration/2, duration/2]``, with ``β = truncation/duration`` (the pulse is
     cut at ``sech(truncation/2)``).
     """
@@ -182,7 +196,7 @@ def hs(
     t = np.linspace(-duration / 2, duration / 2, n_steps)
     beta = truncation / duration
     phase = np.deg2rad(phase_deg) + np.pi * bandwidth / beta * np.log(np.cosh(beta * t))
-    return Segment(name, rf_max_hz / np.cosh(beta * t), phase, duration / n_steps)
+    return Segment(name, 1 / np.cosh(beta * t), phase, duration / n_steps, rabi)
 
 
 # (flips_deg, phases_deg) composite-pulse presets, keyed by number ("10", a duplicate
@@ -213,7 +227,7 @@ def composite(
     *,
     name: str = "composite",
 ) -> list[Segment]:
-    """Composite pulse of rectangular elements at ``1/(4·t90)`` Hz, ``t90`` in s.
+    """Composite pulse of rectangular elements at Rabi frequency ``1/(4·t90)`` Hz, ``t90`` in s.
 
     Element ``i`` flips by ``flips_deg[i]`` (a positive integer) about phase
     ``phases_deg[i]``, sampled one step per degree (``dt = t90/90``).
@@ -224,13 +238,13 @@ def composite(
     for flip in flips_deg:
         if flip <= 0 or flip != int(flip):
             raise ValueError(f"flips_deg must be positive integers, got {flip}")
-    amp = 1 / (4 * t90)
     return [
         Segment(
             f"{name} {flip:g}°({phase:g}°)",
-            np.full(int(flip), amp),
+            np.ones(int(flip)),
             np.full(int(flip), np.deg2rad(phase)),
             t90 / 90,
+            1 / (4 * t90),
         )
         for flip, phase in zip(flips_deg, phases_deg)
     ]
@@ -239,14 +253,15 @@ def composite(
 def read_bruker_shape(
     path: str | os.PathLike,
     duration: float,
-    rf_max_hz: float,
+    rabi: float,
     *,
     name: str | None = None,
 ) -> Segment:
     """Read a Bruker (JCAMP-DX) shape file as a pulse of ``duration`` s.
 
-    Data lines between ``##XYPOINTS=`` and ``##END=`` hold ``amplitude_percent, phase_deg``.
-    Amplitude is scaled so 100 % = ``rf_max_hz``. ``name`` defaults to the file stem.
+    Data lines between ``##XYPOINTS=`` and ``##END=`` hold ``amplitude_percent, phase_deg``;
+    100 % is waveform value 1, at Rabi frequency ``rabi`` Hz. ``name`` defaults to the file
+    stem.
     """
     path = Path(path)
     lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
@@ -277,9 +292,10 @@ def read_bruker_shape(
         raise ValueError(f"{path}: ##XYPOINTS= block has no data lines")
     return Segment(
         path.stem if name is None else name,
-        np.asarray(amp) / 100 * rf_max_hz,
+        np.asarray(amp) / 100,
         np.deg2rad(phase),
         duration / len(amp),
+        rabi,
     )
 
 
@@ -331,10 +347,6 @@ def waveform(
         amp = np.abs(amp)
     if amp.ndim != 1 or amp.size == 0:
         raise ValueError(f"waveform must be a non-empty 1-D array, got shape {amp.shape}")
-    if amp.max() > 1.5:
-        raise ValueError(
-            f"waveform peak is {amp.max():g}; it must be normalised to 1 (rabi sets the Hz)"
-        )
     if (rabi is None) == (t90 is None):
         raise ValueError("give exactly one of rabi (Hz) or t90 (s)")
     if t90 is not None:
@@ -343,7 +355,7 @@ def waveform(
         rabi = 1 / (4 * t90)
     elif not (np.isfinite(rabi) and rabi > 0):
         raise ValueError(f"rabi must be a positive frequency in Hz, got {rabi}")
-    return Segment(name, amp * rabi, phase, duration / amp.size)
+    return Segment(name, amp, phase, duration / amp.size, rabi)
 
 
 __all__ = [

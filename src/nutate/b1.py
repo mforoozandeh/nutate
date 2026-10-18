@@ -52,7 +52,7 @@ def b1_map(
 ) -> B1Map:
     """Final magnetization for every (B1 scale, offset) pair.
 
-    ``rf_ref`` (Hz) defaults to the sequence's peak RF amplitude; pass another reference
+    ``rf_ref`` (Hz) defaults to the sequence's highest Rabi frequency; pass another reference
     (e.g. one pulse's peak) to normalise the offset axis by it.
     """
     sequence = list(sequence)
@@ -65,7 +65,7 @@ def b1_map(
         b1=np.repeat(scales, offsets.size),
     )
     if rf_ref is None:
-        rf_ref = float(max(s.amp.max() for s in sequence))
+        rf_ref = max(s.rabi for s in sequence)
     return B1Map(offsets, scales, final.reshape(scales.size, offsets.size, 3), rf_ref)
 
 

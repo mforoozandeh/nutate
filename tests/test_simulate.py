@@ -22,10 +22,10 @@ def _rotation_matrix(omega, offs, phi, dt):  # literal matrix product of the con
 
 def _random_segment():
     rng = np.random.default_rng(0)
-    amp = rng.uniform(0, 5e3, 50)
+    amp = rng.uniform(0, 1, 50)
     amp[::7] = 0.0
     phase = rng.uniform(0, 2 * np.pi, 50)
-    return Segment("r", amp, phase, 1e-5)
+    return Segment("r", amp, phase, 1e-5, 5e3)
 
 
 OFFSETS = np.array([-3e3, -1e3, 0.0, 2e3, 7e3])
@@ -37,7 +37,7 @@ def test_matches_literal_rotation_matrices():
     for j, d in enumerate(OFFSETS):
         m = np.array([0.0, 0.0, 1.0])
         for k in range(seg.n_steps):
-            m = _rotation_matrix(seg.amp[k], d, seg.phase[k], seg.dt) @ m
+            m = _rotation_matrix(seg.rf[k], d, seg.phase[k], seg.dt) @ m
             np.testing.assert_allclose(traj.m[k + 1, j], m, atol=1e-12)
 
 
@@ -138,7 +138,7 @@ def test_b1_scales_rf_amplitude():
 
 def test_scalar_b1_equals_scaled_segment():
     seg = _random_segment()
-    scaled = Segment("s", 0.7 * seg.amp, seg.phase, seg.dt)
+    scaled = seg.with_rabi(0.7 * seg.rabi)
     np.testing.assert_allclose(
         simulate([seg], OFFSETS, b1=0.7).m, simulate([scaled], OFFSETS).m, atol=1e-12
     )

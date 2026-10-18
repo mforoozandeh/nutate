@@ -5,8 +5,7 @@ composite's behaviour depends only on Δ/Ω1, so keep the window within the rang
 was designed for. Choose a preset with --preset.
 """
 
-import numpy as np
-from _common import finish, parse_args
+from _common import parse_args, report, run_options
 
 import nutate as nt
 
@@ -31,10 +30,14 @@ def _options(parser) -> None:
 def main() -> None:
     args = parse_args(__doc__, _options)
     flips, phases = nt.COMPOSITE_PRESETS[args.preset]
-    rf = 1 / (4 * T90)
-    offsets = np.linspace(-args.window * rf, args.window * rf, 31)
-    traj = nt.simulate(nt.composite(T90, flips, phases), offsets)
-    finish(traj, "composite", args, inset_phase=True)
+    result = nt.run(
+        nt.composite(T90, flips, phases),
+        2 * args.window / (4 * T90),  # ±window·Ω1
+        name="composite",
+        still=True,
+        **run_options(args, inset_phase=True),
+    )
+    report(result)
 
 
 if __name__ == "__main__":

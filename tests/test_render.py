@@ -228,3 +228,26 @@ def test_show_slider_keeps_user_camera(traj, monkeypatch):
 def test_snapshot_step_out_of_range(traj, tmp_path, step):  # traj has 100 steps (states 0..100)
     with pytest.raises(ValueError, match="step"):
         snapshot(traj, tmp_path / "a.png", step=step, size=SMALL)
+
+
+@pytest.mark.render
+def test_inset_plots_rf_in_hz(traj):  # amp · rabi, not the normalised waveform
+    from nutate.render import _make_scene
+
+    scene = _make_scene(
+        traj,
+        SMALL,
+        None,
+        mode="arrows",
+        trail=0.1,
+        inset=True,
+        inset_phase=False,
+        style=Style(),
+        camera=Camera(),
+    )
+    try:
+        (chart,) = scene._overlay._charts
+        assert chart.y_label == "B1 (kHz)"
+        assert chart.y_range == pytest.approx([0.0, 1.1 * 25.0])  # hard 10 µs 90°: 25 kHz
+    finally:
+        scene.plotter.close()

@@ -359,7 +359,7 @@ class _Scene:
         self.plotter.ren_win.AddRenderer(self._overlay)
         seq = self.traj.sequence
         t = self.traj.t[1:] * self._t_factor
-        amp = np.concatenate([s.amp for s in seq])
+        amp = np.concatenate([s.rf for s in seq])
         a_factor, a_unit = si_scale(amp.max(), "Hz")
         t_label = f"t ({self._t_unit})"
         panels = [(f"B1 ({a_unit})", amp * a_factor)]

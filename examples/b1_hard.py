@@ -6,7 +6,7 @@ Illustrative parameters: 10 µs pulse, offsets across ±100 kHz (±4 Ω1).
 """
 
 import numpy as np
-from _common import b1_axes, finish_b1, parse_args
+from _common import parse_args, report, run_options
 
 import nutate as nt
 
@@ -16,17 +16,16 @@ T, BANDWIDTH = 10e-6, 200e3
 def main() -> None:
     args = parse_args(__doc__)
     cycle = 90.0 * np.arange(4)
-    offsets, scales = b1_axes(args, BANDWIDTH)
-    finish_b1(
-        "b1_hard",
-        args,
-        [nt.hard(T, n_steps=1)],
-        offsets,
-        scales,
-        rf_ref=1 / (4 * T),
-        sign=-1,
+    result = nt.run(
+        nt.hard(T, n_steps=1),
+        BANDWIDTH,
+        name="b1_hard",
+        video=False,
+        b1=True,
         phase_cycle=nt.PhaseCycle(cycle[:, None], cycle),
+        **run_options(args),
     )
+    report(result)
 
 
 if __name__ == "__main__":

@@ -12,7 +12,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from _common import finish, parse_args
+from _common import parse_args, report, run_options
 
 import nutate as nt
 
@@ -55,8 +55,14 @@ def main() -> None:
     fig.savefig(out / "compressed_chorus_phase_paths.png", dpi=150)
     plt.close(fig)
 
-    traj = nt.simulate(sequence, np.linspace(-0.1 * BANDWIDTH, 0.3 * BANDWIDTH, 5))
-    finish(traj, "compressed_chorus_epr", args, duration=12)
+    result = nt.run(
+        sequence,
+        offsets=np.linspace(-0.1 * BANDWIDTH, 0.3 * BANDWIDTH, 5),
+        name="compressed_chorus_epr",
+        still=True,
+        **run_options(args, duration=12),
+    )
+    report(result)
 
 
 if __name__ == "__main__":

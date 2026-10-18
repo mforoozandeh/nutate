@@ -9,6 +9,7 @@ from nutate import (
     composite,
     hard,
     simulate_final,
+    waveform,
 )
 
 
@@ -72,3 +73,8 @@ def test_b1_scales_validation(scales):
 def test_b1_delta_validation(delta):
     with pytest.raises(ValueError, match="delta"):
         b1_phase_sensitivity([hard(1e-5)], [1.0], delta=delta)
+
+
+def test_b1_map_default_rf_ref_is_rabi():  # not the waveform's peak, which may sit below 1
+    pulse = waveform([0.8, 0.9], [0.0, 0.0], duration=1e-6, rabi=1e4)
+    assert b1_map([pulse], [-1e3, 1e3], [0.9, 1.1]).rf_ref == 1e4

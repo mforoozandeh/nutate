@@ -9,7 +9,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from _common import finish, parse_args
+from _common import parse_args, report, run_options
 
 import nutate as nt
 
@@ -30,9 +30,9 @@ def main() -> None:
         plt.close(fig)
 
     sequence = nt.chorus(T90, T180, BANDWIDTH, DT, phase_correction_deg=correction)
-    traj = nt.simulate(sequence, np.linspace(-15e3, 15e3, 31))
     # 6000 steps: a short trail, or 31 offsets × many precession turns become a web.
-    finish(traj, "chorus", args, duration=15, trail=0.02)
+    options = run_options(args, duration=15, trail=0.02)
+    report(nt.run(sequence, 30e3, name="chorus", still=True, **options))
 
 
 if __name__ == "__main__":

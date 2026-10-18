@@ -21,51 +21,70 @@ the ffmpeg binary bundled with `imageio-ffmpeg`; no system ffmpeg or LaTeX neede
 
 ## Quickstart
 
+A generator makes the pulse: a waveform normalised to 1 plus its duration and Rabi
+frequency ν1 (the RF amplitude at waveform value 1). `nt.run` simulates it and writes the
+video and/or the B1 robustness figures.
+
 ```python
-import numpy as np
 import nutate as nt
 
-pulse = nt.chirp(10e-3, 20e3, 500, smoothing=10)
-traj = nt.simulate([pulse], offsets=np.linspace(-5e3, 5e3, 31))
-nt.render(traj, "chirp.mp4", duration=12)
+pulse = nt.chirp(10e-3, 20e3, 500, smoothing=10)  # pulse.amp (peak 1), .phase, .duration, .rabi
+nt.run(pulse, 10e3, still=True, b1=True, out="output", name="chirp")
+# output/chirp.mp4, chirp.png, chirp_b1_map.png, chirp_b1_surface.png, chirp_b1_phase.png
 ```
 
 Units are SI throughout (seconds, hertz, radians); arguments in degrees end in `_deg`.
 
-Useful `render` options:
+Generators: `nt.hard`, `nt.chirp`, `nt.hs`, `nt.composite` (a list, one pulse per element),
+`nt.chorus` (a list including its delay) and `nt.read_bruker_shape`; `nt.delay` adds free
+precession. `pulse.with_rabi(ν1)` changes the Rabi frequency and keeps the waveform.
 
-- `offsets`: draw only `k` evenly spaced offsets, or given indices
-- `mode`: `"arrows"`, `"ribbon"` (a curve through all tips) or `"both"`
-- `trail`: fading tip trails, as a fraction of the sequence
-- `inset` / `inset_phase`: RF amplitude (and phase) vs time with a moving cursor
-- `style=nt.Style(theme="dark")`, `camera=nt.Camera(orbit=90)`
+### Your own waveform
+
+`nt.waveform` turns arrays from any other generator (an optimiser, a shape tool) into a
+pulse: amplitude and phase, or I and Q, normalised to 1. `rabi` is the Rabi frequency in
+Hz, or give `t90`, the hard 90° pulse length (`rabi = 1/(4·t90)`). Slight overshoot above 1
+is simulated as given; a peak above 1.5 is an error.
+
+```python
+p1 = nt.waveform(amp, phase, duration=2e-3, rabi=15e3)        # or phase_deg=...
+p2 = nt.waveform(i=I, q=Q, duration=1e-3, t90=10e-6)
+result = nt.run([p1, p2], 300e3, b1=True, out="output", name="my_pulse")
+```
+
+### `nt.run` options
+
+- Offsets span `±bandwidth/2`: `n_offsets` (31) for the video, `b1_offsets` (101) for the
+  B1 map. Or pass `offsets=` (Hz) for both.
+- `video` (on), `still` (last frame as PNG), `b1` (off), `show` (interactive windows
+  instead of files). Pulses in a list play back to back; `phase_cycle=` is passed through.
+- `video_options` go to `nt.render`; those that apply also go to the still and the viewer:
+  - `offsets`: draw only `k` evenly spaced offsets, or given indices
+  - `mode`: `"arrows"`, `"ribbon"` (a curve through all tips) or `"both"`
+  - `trail`: fading tip trails, as a fraction of the sequence
+  - `inset` / `inset_phase`: RF amplitude (and phase) vs time with a moving cursor
+  - `style=nt.Style(theme="dark")`, `camera=nt.Camera(orbit=90)`, `duration`, `size`
+- B1 figures plot `−My` by default; `component="z"` for inversion. `b1_scales` (0.5–1.5) and
+  `rf_ref` (the highest ν1, for the `Δ/Ω1(0)` axis) can be changed.
+- The result holds the trajectory, the B1 map, the phase sensitivity and the files written.
+
+### Lower level
+
+```python
+import numpy as np
+
+traj = nt.simulate([pulse], offsets=np.linspace(-5e3, 5e3, 31))
+nt.render(traj, "chirp.mp4", duration=12)
+```
 
 `nt.snapshot(...)` writes a PNG still; `nt.show(traj)` opens an interactive window with a
 time slider. `nt.plot_profiles(traj)` and `nt.plot_map(traj)` make the 2D excitation
 profile and time–offset map plots.
 
-### Your own waveform
-
-`nt.waveform` turns a waveform normalised to 1 (amplitude and phase, or I and Q) into a
-pulse; `rabi` is the Rabi frequency in Hz at waveform value 1, or `t90` the hard 90° pulse
-length (`rabi = 1/(4·t90)`). `nt.run` then writes the video and/or the B1 figures:
-
-```python
-p1 = nt.waveform(amp, phase, duration=2e-3, rabi=15e3)        # or phase_deg=...
-p2 = nt.waveform(i=I, q=Q, duration=1e-3, t90=10e-6)
-
-result = nt.run([p1, p2], bandwidth=300e3, b1=True, out="output", name="my_pulse")
-# output/my_pulse.mp4, my_pulse_b1_map.png, my_pulse_b1_surface.png, my_pulse_b1_phase.png
-```
-
-Pulses in a list play back to back. `video=False` skips the video, `video_options` go to
-`nt.render`, and `component="z"` maps −Mz (inversion) instead of −My. `result` holds the
-trajectory, the B1 map and the files written.
-
 ### B1 robustness
 
 ```python
-pulse = nt.hard(10e-6, n_steps=1)                 # 90° at Ω1(0) = 25 kHz
+pulse = nt.hard(10e-6, n_steps=1)                 # 90° at ν1 = Ω1(0) = 25 kHz
 offsets = np.linspace(-100e3, 100e3, 101)         # Δ/Ω1(0) from −4 to 4
 scales = np.linspace(0.5, 1.5, 101)               # Ω1 / Ω1(0)
 bmap = nt.b1_map([pulse], offsets, scales)
@@ -84,9 +103,10 @@ CHORUS-like sequence.
 
 ## Examples
 
-Each video script writes `output/<name>.mp4` and `.png`; the `b1_*` scripts write
-`output/<name>_map.png`, `_surface.png` and `_phase.png`. `--show` and `--out DIR` work
-for all of them; `--theme dark` for the videos.
+Each script generates its pulses and passes them to `nt.run`. Video scripts write
+`output/<name>.mp4` and `.png`; the `b1_*` scripts (and `waveform.py`) write
+`output/<name>_b1_map.png`, `_b1_surface.png` and `_b1_phase.png`. `--show` and `--out DIR`
+work for all of them; `--theme dark` for the videos.
 
 | Example | Shows |
 |---|---|
@@ -97,6 +117,7 @@ for all of them; `--theme dark` for the videos.
 | [`examples/chorus.py`](examples/chorus.py) | CHORUS with phase correction, plus excitation profiles |
 | [`examples/compressed_chorus_epr.py`](examples/compressed_chorus_epr.py) | compressed CHORUS for EPR, plus a time–offset map and phase paths |
 | [`examples/bruker_shape.py`](examples/bruker_shape.py) | any Bruker shape file |
+| [`examples/waveform.py`](examples/waveform.py) | your own I/Q arrays (a shifted Gaussian 90°): video, still and B1 figures |
 | [`examples/b1_hard.py`](examples/b1_hard.py) | B1 map and phase sensitivity: hard 90° pulse |
 | [`examples/b1_composite.py`](examples/b1_composite.py) | B1 map and phase sensitivity: composite pulses |
 | [`examples/b1_chirp.py`](examples/b1_chirp.py) | B1 map and phase sensitivity: single chirp |
@@ -108,9 +129,9 @@ for all of them; `--theme dark` for the videos.
 
 - Rotating frame, no relaxation; initial magnetization `(0, 0, 1)`.
 - Each step rotates the magnetization by `+α = 2π·sqrt(Ω² + Δ²)·dt` (right-handed) about
-  `n = (sinθ cosφ, sinθ sinφ, cosθ)` with `θ = atan2(Ω, Δ)`, for RF amplitude `Ω`, phase
-  `φ` and offset `Δ` — i.e. `Rz(φ)·Ry(θ)·Rz(α)·Ry(−θ)·Rz(−φ)`. So an on-resonance 90°
-  pulse with phase 0 takes `z → −y`.
+  `n = (sinθ cosφ, sinθ sinφ, cosθ)` with `θ = atan2(Ω, Δ)`, for RF amplitude `Ω`
+  (waveform × ν1), phase `φ` and offset `Δ` — i.e. `Rz(φ)·Ry(θ)·Rz(α)·Ry(−θ)·Rz(−φ)`. So an
+  on-resonance 90° pulse with phase 0 takes `z → −y`.
 - Profile phase is `angle(My + i·Mx)`.
 
 ## Headless rendering

@@ -17,10 +17,9 @@ def test_chorus_structure():
     assert [s.n_steps for s in segs] == [2000, 2000, 1000, 1000]
     np.testing.assert_allclose([s.duration for s in segs], [2e-3, 2e-3, 1e-3, 1e-3])
     assert segs[2].dt == pytest.approx(1e-6)
-    assert segs[0].amp.max() == pytest.approx(
-        np.sqrt(2e-3 * 300e3 * q_factor(90) / (2 * np.pi)) / 2e-3
-    )
-    assert segs[1].amp.max() == pytest.approx(np.sqrt(2e-3 * 300e3 * 5 / (2 * np.pi)) / 2e-3)
+    assert segs[0].rabi == pytest.approx(np.sqrt(2e-3 * 300e3 * q_factor(90) / (2 * np.pi)) / 2e-3)
+    assert segs[1].rabi == pytest.approx(np.sqrt(2e-3 * 300e3 * 5 / (2 * np.pi)) / 2e-3)
+    assert [s.amp.max() for s in segs] == pytest.approx([1, 1, 0, 1])
 
 
 @pytest.mark.parametrize(

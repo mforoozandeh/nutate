@@ -178,7 +178,7 @@ def _propagate(
     for i, seg in enumerate(sequence):
         offs = _segment_offsets(seg, offsets)
         segments.append((seg.name, k, k + seg.n_steps))
-        for amp, phase in zip(seg.amp, seg.phase):
+        for amp, phase in zip(seg.rf, seg.phase):
             current = _rotate(_step(amp * b1, phase + pulse_phases[:, i], offs, seg.dt), current)
             k += 1
             if record:

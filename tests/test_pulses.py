@@ -17,9 +17,10 @@ from nutate import (
 
 
 def test_segment_properties():
-    s = Segment("x", amp=np.full(4, 10.0), phase=np.zeros(4), dt=1e-6)
+    s = Segment("x", amp=np.full(4, 0.5), phase=np.zeros(4), dt=1e-6, rabi=10e3)
     assert s.n_steps == 4
     assert s.duration == pytest.approx(4e-6)
+    np.testing.assert_allclose(s.rf, 5e3)  # Hz: amp · rabi
 
 
 @pytest.mark.parametrize(
@@ -30,18 +31,22 @@ def test_segment_properties():
         ({"amp": np.ones(3), "phase": np.zeros(3), "dt": 0.0}, "dt"),
         ({"amp": np.array([1.0, np.nan]), "phase": np.zeros(2), "dt": 1e-6}, "amp"),
         ({"amp": np.ones(0), "phase": np.zeros(0), "dt": 1e-6}, "amp"),
+        ({"amp": np.full(3, 2.0), "phase": np.zeros(3), "dt": 1e-6}, "normalised"),
+        ({"amp": np.ones(3), "phase": np.zeros(3), "dt": 1e-6, "rabi": -1.0}, "rabi"),
+        ({"amp": np.ones(3), "phase": np.zeros(3), "dt": 1e-6, "rabi": np.nan}, "rabi"),
     ],
 )
 def test_segment_validation(kwargs, field):
     with pytest.raises(ValueError, match=field):
-        Segment("x", **kwargs)
+        Segment("x", **{"rabi": 1e3, **kwargs})
 
 
 def test_hard_amplitude_and_phase():
     s = hard(10e-6, flip_deg=90, phase_deg=90, n_steps=1000)
     assert s.n_steps == 1000
     assert s.duration == pytest.approx(10e-6)
-    np.testing.assert_allclose(s.amp, 25e3)  # 90 / (360 · 10 µs)
+    np.testing.assert_allclose(s.amp, 1.0)
+    assert s.rabi == pytest.approx(25e3)  # 90 / (360 · 10 µs)
     np.testing.assert_allclose(s.phase, np.pi / 2)
 
 
@@ -67,9 +72,10 @@ def test_chirp_envelope():
     peak = np.sqrt(10e-3 * 20e3 * q_factor(90) / (2 * np.pi)) / 10e-3
     assert c.n_steps == 500
     assert c.dt == pytest.approx(2e-5)
-    ramp = peak * np.sin(np.linspace(0, np.pi / 2, 50))
+    assert c.rabi == pytest.approx(peak)
+    ramp = np.sin(np.linspace(0, np.pi / 2, 50))
     np.testing.assert_allclose(c.amp[:50], ramp)
-    np.testing.assert_allclose(c.amp[50:450], peak)
+    np.testing.assert_allclose(c.amp[50:450], 1.0)
     np.testing.assert_allclose(c.amp[450:], ramp[::-1])
 
 
@@ -119,7 +125,8 @@ def test_composite_segments():
     segs = composite(10e-6, (90, 180), (0, 120))
     assert [s.n_steps for s in segs] == [90, 180]
     assert segs[0].dt == pytest.approx(10e-6 / 90)
-    np.testing.assert_allclose(segs[1].amp, 25e3)
+    np.testing.assert_allclose(segs[1].amp, 1.0)
+    assert [s.rabi for s in segs] == pytest.approx([25e3, 25e3])
     np.testing.assert_allclose(segs[1].phase, np.deg2rad(120))
 
 
@@ -151,7 +158,8 @@ def test_read_shape(tmp_path):
     p = tmp_path / "pulse.txt"
     p.write_text(SHAPE)
     s = read_bruker_shape(p, 4e-6, 10e3)
-    np.testing.assert_allclose(s.amp, [0, 5e3, 10e3, 5e3])
+    np.testing.assert_allclose(s.amp, [0, 0.5, 1.0, 0.5])  # 100 % = waveform value 1
+    assert s.rabi == 10e3
     np.testing.assert_allclose(s.phase, np.deg2rad([0, 90, 180, 270]))
     assert s.dt == pytest.approx(1e-6)
     assert s.name == "pulse"
@@ -161,7 +169,7 @@ def test_read_shape_windows_line_endings(tmp_path):  # Review Focus 1
     text = SHAPE.replace(" 50.0, 90.0\n", "\n 50.0, 90.0   \n\n").replace("\n", "\r\n")
     p = tmp_path / "w.txt"
     p.write_bytes(text.encode())
-    np.testing.assert_allclose(read_bruker_shape(p, 4e-6, 10e3).amp, [0, 5e3, 10e3, 5e3])
+    np.testing.assert_allclose(read_bruker_shape(p, 4e-6, 10e3).amp, [0, 0.5, 1.0, 0.5])
 
 
 def test_read_shape_malformed_line(tmp_path):
@@ -178,27 +186,28 @@ def test_read_shape_missing_xypoints(tmp_path):
         read_bruker_shape(p, 4e-6, 10e3)
 
 
-def test_with_peak_rescales_amplitude():
+def test_with_rabi_sets_rabi_only():
     c = chirp(1e-3, 50e3, 200, smoothing=10)
-    scaled = c.with_peak(1234.0)
-    assert scaled.amp.max() == pytest.approx(1234.0)
-    np.testing.assert_allclose(scaled.amp / scaled.amp.max(), c.amp / c.amp.max())
+    scaled = c.with_rabi(1234.0)
+    assert scaled.rabi == 1234.0
+    np.testing.assert_array_equal(scaled.amp, c.amp)
     np.testing.assert_array_equal(scaled.phase, c.phase)
     assert scaled.dt == c.dt
     assert scaled.name == c.name
 
 
-def test_with_peak_needs_rf():
-    with pytest.raises(ValueError, match="amp"):
-        delay(1e-3, 10).with_peak(100.0)
+def test_with_rabi_validates():
+    with pytest.raises(ValueError, match="rabi"):
+        hard(1e-5).with_rabi(-1.0)
 
 
 def test_hs_shape():
     # sech amplitude, phase phi0·ln cosh, βT = 10.6.
     T, bw, n = 2e-3, 100e3, 401
-    s = hs(T, bw, n, rf_max_hz=5e3, phase_deg=90)
+    s = hs(T, bw, n, rabi=5e3, phase_deg=90)
     t = np.linspace(-T / 2, T / 2, n)
-    np.testing.assert_allclose(s.amp, 5e3 / np.cosh(10.6 * t / T))
+    np.testing.assert_allclose(s.amp, 1 / np.cosh(10.6 * t / T))
+    assert s.rabi == 5e3
     phi0 = np.pi * bw * T / 10.6
     np.testing.assert_allclose(s.phase, np.pi / 2 + phi0 * np.log(np.cosh(10.6 * t / T)))
     assert s.dt == pytest.approx(T / n)
@@ -207,7 +216,7 @@ def test_hs_shape():
 
 def test_hs_sweeps_bandwidth():
     T, bw = 2e-3, 100e3
-    s = hs(T, bw, 2001, rf_max_hz=5e3)
+    s = hs(T, bw, 2001, rabi=5e3)
     freq = np.gradient(s.phase, np.linspace(-T / 2, T / 2, 2001)) / (2 * np.pi)
     assert freq[-1] == pytest.approx(bw / 2 * np.tanh(5.3), rel=1e-3)
     assert freq[0] == pytest.approx(-bw / 2 * np.tanh(5.3), rel=1e-3)
@@ -215,7 +224,8 @@ def test_hs_sweeps_bandwidth():
 
 def test_waveform_scales_by_rabi_without_rescaling():
     s = waveform([0.5, 1.05], [0.0, np.pi / 2], duration=2e-6, rabi=1e4, name="w")
-    np.testing.assert_allclose(s.amp, [5e3, 10.5e3])  # overshoot above 1 kept, not clipped
+    np.testing.assert_allclose(s.amp, [0.5, 1.05])  # overshoot above 1 kept, not clipped
+    assert s.rabi == 1e4
     np.testing.assert_allclose(s.phase, [0.0, np.pi / 2])
     assert s.dt == pytest.approx(1e-6)
     assert s.name == "w"
@@ -223,6 +233,7 @@ def test_waveform_scales_by_rabi_without_rescaling():
 
 def test_waveform_t90_gives_rabi():  # ν1 = 1/(4·t90): a unit waveform lasting t90 is a 90°
     s = waveform(np.ones(10), np.zeros(10), duration=10e-6, t90=10e-6)
+    assert s.rabi == pytest.approx(25e3)
     np.testing.assert_allclose(simulate([s], [0.0]).final[0], [0, -1, 0], atol=1e-9)
 
 
@@ -233,7 +244,7 @@ def test_waveform_iq_puts_q_along_y():
 
 def test_waveform_iq_amplitude_and_phase():
     s = waveform(i=[1.0, 0.0, -0.6], q=[0.0, 0.5, 0.8], duration=3e-6, rabi=1e4)
-    np.testing.assert_allclose(s.amp, [1e4, 5e3, 1e4])
+    np.testing.assert_allclose(s.amp, [1.0, 0.5, 1.0])
     np.testing.assert_allclose(s.phase, [0.0, np.pi / 2, np.arctan2(0.8, -0.6)])
 
 
@@ -244,7 +255,7 @@ def test_waveform_phase_deg():
 
 def test_waveform_negative_amplitude_flips_phase():
     s = waveform([-0.5, 0.5], [0.25, 0.25], duration=2e-6, rabi=1e4)
-    np.testing.assert_allclose(s.amp, [5e3, 5e3])
+    np.testing.assert_allclose(s.amp, [0.5, 0.5])
     np.testing.assert_allclose(s.phase, [0.25 + np.pi, 0.25])
 
 

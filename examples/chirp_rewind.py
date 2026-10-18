@@ -5,8 +5,7 @@ offset Δ·(Δ/(2·bw) − 1/2), which refocuses the chirp's offset-dependent ph
 across ±2 kHz.
 """
 
-import numpy as np
-from _common import finish, parse_args
+from _common import parse_args, report, run_options
 
 import nutate as nt
 
@@ -19,8 +18,10 @@ def main() -> None:
         nt.chirp(10e-3, BANDWIDTH, 500, smoothing=10),
         nt.delay(10e-3, 500, name="rewind", offset_fn=lambda d: d * (d / (2 * BANDWIDTH) - 0.5)),
     ]
-    traj = nt.simulate(sequence, np.linspace(-2e3, 2e3, 31))
-    finish(traj, "chirp_rewind", args, duration=14)
+    result = nt.run(
+        sequence, 4e3, name="chirp_rewind", still=True, **run_options(args, duration=14)
+    )
+    report(result)
 
 
 if __name__ == "__main__":

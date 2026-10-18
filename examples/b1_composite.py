@@ -6,7 +6,7 @@ This example's preset table differs from nutate.COMPOSITE_PRESETS in 10 (same as
 sensitivity. Illustrative parameters: t90 = 10 µs.
 """
 
-from _common import b1_axes, finish_b1, parse_args
+from _common import parse_args, report, run_options
 
 import nutate as nt
 
@@ -53,9 +53,15 @@ def _options(parser) -> None:
 def main() -> None:
     args = parse_args(__doc__, _options)
     flips, phases = PRESETS[args.preset]
-    offsets, scales = b1_axes(args, 2 * args.window / (4 * T90))
-    sequence = nt.composite(T90, flips, phases)
-    finish_b1("b1_composite", args, sequence, offsets, scales, rf_ref=1 / (4 * T90), sign=-1)
+    result = nt.run(
+        nt.composite(T90, flips, phases),
+        2 * args.window / (4 * T90),  # ±window·Ω1, Ω1 = 1/(4·t90)
+        name="b1_composite",
+        video=False,
+        b1=True,
+        **run_options(args),
+    )
+    report(result)
 
 
 if __name__ == "__main__":
