@@ -876,7 +876,7 @@ wheels = [
 
 [[package]]
 name = "nutate"
-version = "0.1.0.dev0"
+version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "imageio" },
@@ -900,7 +900,7 @@ requires-dist = [
     { name = "matplotlib", specifier = ">=3.10" },
     { name = "numpy", specifier = ">=1.24" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
-    { name = "pyvista", specifier = ">=0.44" },
+    { name = "pyvista", specifier = ">=0.45" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },
 ]
 provides-extras = ["dev"]

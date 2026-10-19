@@ -4,20 +4,52 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nutate"
-version = "0.1.0.dev0"
+version = "0.1.0"
 description = "Bloch simulations of any pulse sequence rendered as 3D Bloch-sphere videos"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Mohammadali Foroozandeh" }]
+keywords = [
+    "Bloch sphere",
+    "Bloch simulation",
+    "NMR",
+    "EPR",
+    "ESR",
+    "qubit",
+    "pulse",
+    "magnetic resonance",
+    "visualization",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
 dependencies = [
     "numpy>=1.24",
-    "pyvista>=0.44",
+    "pyvista>=0.45",
     "matplotlib>=3.10",
     "imageio>=2.31",
     "imageio-ffmpeg>=0.6",
 ]
+
+[project.urls]
+Homepage = "https://github.com/mforoozandeh/nutate"
+Repository = "https://github.com/mforoozandeh/nutate"
+Issues = "https://github.com/mforoozandeh/nutate/issues"
+Changelog = "https://github.com/mforoozandeh/nutate/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6"]

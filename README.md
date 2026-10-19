@@ -2,7 +2,7 @@
 
 Bloch simulations of any pulse sequence, rendered as 3D Bloch-sphere videos.
 
-![Chirp excitation on the Bloch sphere](docs/media/chirp.gif)
+![Chirp excitation on the Bloch sphere](https://raw.githubusercontent.com/mforoozandeh/nutate/main/docs/media/chirp.gif)
 
 Nutate takes any pulse, given as a waveform (amplitude and phase, or I and Q) with its
 duration and Rabi frequency, whether it drives nuclear spins (NMR), electron spins (EPR/ESR)
@@ -15,11 +15,11 @@ families (chirps, hyperbolic-secant pulses, CHORUS, composite pulses) live in
 ## Install
 
 ```bash
-pip install git+https://github.com/mforoozandeh/nutate
+pip install nutate
 ```
 
-(`pip install nutate` after the first PyPI release.) Python ≥ 3.11. Video encoding uses
-the ffmpeg binary bundled with `imageio-ffmpeg`; no system ffmpeg or LaTeX needed.
+Python ≥ 3.11. Video encoding uses the ffmpeg binary bundled with `imageio-ffmpeg`; no
+system ffmpeg or LaTeX needed.
 
 ## Quickstart
 
@@ -132,19 +132,19 @@ folder, `video_options={"theme": "dark"}` for a dark video.
 
 | Example | Shows |
 |---|---|
-| [`examples/chirp.py`](examples/chirp.py) | linear chirp excitation |
-| [`examples/chirp_rewind.py`](examples/chirp_rewind.py) | a chirp, then an ideal rewind of its quadratic phase |
-| [`examples/hard_pulse.py`](examples/hard_pulse.py) | a hard 90° pulse over a wide offset range |
-| [`examples/composite.py`](examples/composite.py) | composite pulses (`--preset N`, `--window W` in units of Ω1) |
-| [`examples/chorus.py`](examples/chorus.py) | CHORUS with phase correction, plus excitation profiles |
-| [`examples/compressed_chorus_epr.py`](examples/compressed_chorus_epr.py) | compressed CHORUS for EPR, plus a time–offset map and phase paths |
-| [`examples/waveform.py`](examples/waveform.py) | your own I/Q arrays (a shifted Gaussian 90°): video, still and B1 figures |
-| [`examples/b1_hard.py`](examples/b1_hard.py) | B1 map and phase sensitivity: hard 90° pulse |
-| [`examples/b1_composite.py`](examples/b1_composite.py) | B1 map and phase sensitivity: composite pulses |
-| [`examples/b1_chirp.py`](examples/b1_chirp.py) | B1 map and phase sensitivity: single chirp |
-| [`examples/b1_double_chirp.py`](examples/b1_double_chirp.py) | B1 map and phase sensitivity: double chirp |
-| [`examples/b1_chorus.py`](examples/b1_chorus.py) | B1 map and phase sensitivity: CHORUS |
-| [`examples/b1_abstruse.py`](examples/b1_abstruse.py) | B1 map and phase sensitivity: ABSTRUSE (hyperbolic-secant pulses) |
+| [`examples/chirp.py`](https://github.com/mforoozandeh/nutate/blob/main/examples/chirp.py) | linear chirp excitation |
+| [`examples/chirp_rewind.py`](https://github.com/mforoozandeh/nutate/blob/main/examples/chirp_rewind.py) | a chirp, then an ideal rewind of its quadratic phase |
+| [`examples/hard_pulse.py`](https://github.com/mforoozandeh/nutate/blob/main/examples/hard_pulse.py) | a hard 90° pulse over a wide offset range |
+| [`examples/composite.py`](https://github.com/mforoozandeh/nutate/blob/main/examples/composite.py) | a composite pulse (preset 9 on a 10 µs 90° pulse) |
+| [`examples/chorus.py`](https://github.com/mforoozandeh/nutate/blob/main/examples/chorus.py) | CHORUS with phase correction, plus excitation profiles |
+| [`examples/compressed_chorus_epr.py`](https://github.com/mforoozandeh/nutate/blob/main/examples/compressed_chorus_epr.py) | compressed CHORUS for EPR, plus a time–offset map and phase paths |
+| [`examples/waveform.py`](https://github.com/mforoozandeh/nutate/blob/main/examples/waveform.py) | your own I/Q arrays (a shifted Gaussian 90°): video, still and B1 figures |
+| [`examples/b1_hard.py`](https://github.com/mforoozandeh/nutate/blob/main/examples/b1_hard.py) | B1 map and phase sensitivity: hard 90° pulse |
+| [`examples/b1_composite.py`](https://github.com/mforoozandeh/nutate/blob/main/examples/b1_composite.py) | B1 map and phase sensitivity: composite pulses |
+| [`examples/b1_chirp.py`](https://github.com/mforoozandeh/nutate/blob/main/examples/b1_chirp.py) | B1 map and phase sensitivity: single chirp |
+| [`examples/b1_double_chirp.py`](https://github.com/mforoozandeh/nutate/blob/main/examples/b1_double_chirp.py) | B1 map and phase sensitivity: double chirp |
+| [`examples/b1_chorus.py`](https://github.com/mforoozandeh/nutate/blob/main/examples/b1_chorus.py) | B1 map and phase sensitivity: CHORUS |
+| [`examples/b1_abstruse.py`](https://github.com/mforoozandeh/nutate/blob/main/examples/b1_abstruse.py) | B1 map and phase sensitivity: ABSTRUSE (hyperbolic-secant pulses) |
 
 ## Conventions
 
@@ -163,8 +163,8 @@ OpenGL context (OSMesa/EGL or a virtual display); see the off-screen rendering n
 
 ## Citation
 
-If you use `nutate` in published work, please cite it; see [`CITATION.cff`](CITATION.cff).
+If you use `nutate` in published work, please cite it; see [`CITATION.cff`](https://github.com/mforoozandeh/nutate/blob/main/CITATION.cff).
 
 ## License
 
-Apache License 2.0 — see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
+Apache License 2.0 — see [`LICENSE`](https://github.com/mforoozandeh/nutate/blob/main/LICENSE) and [`NOTICE`](https://github.com/mforoozandeh/nutate/blob/main/NOTICE).
