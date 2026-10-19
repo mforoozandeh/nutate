@@ -1,14 +1,16 @@
 # Nutate
 
-Bloch simulations of RF pulse sequences, rendered as 3D Bloch-sphere videos.
+Bloch simulations of any pulse sequence, rendered as 3D Bloch-sphere videos.
 
 ![Chirp excitation on the Bloch sphere](docs/media/chirp.gif)
 
-Nutate simulates magnetization trajectories in the rotating frame for many offsets at
-once, then renders them with [PyVista](https://pyvista.org) as MP4/GIF videos, PNG stills,
-or an interactive viewer. It covers hard and composite pulses, linear chirps, hyperbolic-secant
-pulses, CHORUS (NMR and compressed EPR versions) and Bruker shape files, and maps robustness
-to RF (B1) amplitude errors.
+Nutate takes any pulse, given as a waveform (amplitude and phase, or I and Q) with its
+duration and Rabi frequency, whether it drives nuclear spins (NMR), electron spins (EPR/ESR)
+or a qubit. It simulates the Bloch vector in the rotating frame for many offsets at once,
+renders the trajectories with [PyVista](https://pyvista.org) as MP4/GIF videos, PNG stills
+or an interactive viewer, and maps robustness to drive (B1) amplitude errors. Optional pulse
+families (chirps, hyperbolic-secant pulses, CHORUS, composite pulses) live in
+`nutate.pulses`.
 
 ## Install
 
@@ -27,17 +29,23 @@ video and/or the B1 robustness figures.
 
 ```python
 import nutate as nt
+from nutate.pulses.swept_frequency import chirp
 
-pulse = nt.chirp(10e-3, 20e3, 500, smoothing=10)  # pulse.amp (peak 1), .phase, .duration, .rabi
+pulse = chirp(10e-3, 20e3, 500, smoothing=10)  # pulse.amp (peak 1), .phase, .duration, .rabi
 nt.run(pulse, 10e3, still=True, b1=True, out="output", name="chirp")
 # output/chirp.mp4, chirp.png, chirp_b1_map.png, chirp_b1_surface.png, chirp_b1_phase.png
 ```
 
 Units are SI throughout (seconds, hertz, radians); arguments in degrees end in `_deg`.
 
-Generators: `nt.hard`, `nt.chirp`, `nt.hs`, `nt.composite` (a list, one pulse per element),
-`nt.chorus` (a list including its delay) and `nt.read_bruker_shape`; `nt.delay` adds free
-precession. `pulse.with_rabi(ν1)` changes the Rabi frequency and keeps the waveform.
+The package core holds the pulse type, `nt.waveform` (your own arrays) and `nt.delay` (free
+precession). Pulse families live in `nutate.pulses`:
+
+- `nutate.pulses.swept_frequency`: `chirp`, `hs`, `chorus` (a list including its delay),
+  `CHORUS_CYCLE`, `phase_correction` and `chorus_phase_correction`
+- `nutate.pulses.composite`: `composite` (a list, one pulse per element) and `PRESETS`
+
+`pulse.with_rabi(ν1)` changes the Rabi frequency and keeps the waveform.
 
 ### Your own waveform
 
@@ -84,7 +92,7 @@ profile and time–offset map plots.
 ### B1 robustness
 
 ```python
-pulse = nt.hard(10e-6, n_steps=1)                 # 90° at ν1 = Ω1(0) = 25 kHz
+pulse = nt.waveform([1.0], [0.0], duration=10e-6, t90=10e-6)  # hard 90°, ν1 = 25 kHz
 offsets = np.linspace(-100e3, 100e3, 101)         # Δ/Ω1(0) from −4 to 4
 scales = np.linspace(0.5, 1.5, 101)               # Ω1 / Ω1(0)
 bmap = nt.b1_map([pulse], offsets, scales)
@@ -98,8 +106,8 @@ offsets; `examples/b1_chirp.py` uses 1000, as the original script did.
 
 `simulate(..., b1=...)` scales every RF amplitude (one factor, or one per offset);
 `simulate_final` returns only the final states, which keeps large grids small in memory.
-`phase_correction(sequence, bandwidth, ...)` fits the first-chirp phase correction for any
-CHORUS-like sequence.
+`nutate.pulses.swept_frequency.phase_correction(sequence, bandwidth, ...)` fits the
+first-chirp phase correction for any CHORUS-like sequence.
 
 ## Examples
 
@@ -117,7 +125,6 @@ folder, `video_options={"style": nt.Style(theme="dark")}` for a dark video.
 | [`examples/composite.py`](examples/composite.py) | composite pulses (`--preset N`, `--window W` in units of Ω1) |
 | [`examples/chorus.py`](examples/chorus.py) | CHORUS with phase correction, plus excitation profiles |
 | [`examples/compressed_chorus_epr.py`](examples/compressed_chorus_epr.py) | compressed CHORUS for EPR, plus a time–offset map and phase paths |
-| [`examples/bruker_shape.py`](examples/bruker_shape.py) | any Bruker shape file |
 | [`examples/waveform.py`](examples/waveform.py) | your own I/Q arrays (a shifted Gaussian 90°): video, still and B1 figures |
 | [`examples/b1_hard.py`](examples/b1_hard.py) | B1 map and phase sensitivity: hard 90° pulse |
 | [`examples/b1_composite.py`](examples/b1_composite.py) | B1 map and phase sensitivity: composite pulses |

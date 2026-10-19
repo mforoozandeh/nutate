@@ -9,6 +9,7 @@ Illustrative parameters: T = 1 ms, 300 kHz, 1000 steps.
 import numpy as np
 
 import nutate as nt
+from nutate.pulses.swept_frequency import CHORUS_CYCLE, chirp, phase_correction
 
 T, BANDWIDTH, N = 1e-3, 300e3, 1000
 RABI = np.sqrt(T / 2 * BANDWIDTH * 5 / (2 * np.pi)) / (T / 2)
@@ -16,18 +17,16 @@ RABI = np.sqrt(T / 2 * BANDWIDTH * 5 / (2 * np.pi)) / (T / 2)
 
 def sequence(correction=None) -> list[nt.Segment]:
     return [
-        nt.chirp(T, BANDWIDTH, N, smoothing=5, phase_correction_deg=correction).with_rabi(
-            RABI / 4.75
-        ),
-        nt.chirp(T, BANDWIDTH, N, smoothing=5).with_rabi(0.9661 * RABI / np.sqrt(2)),
+        chirp(T, BANDWIDTH, N, smoothing=5, phase_correction_deg=correction).with_rabi(RABI / 4.75),
+        chirp(T, BANDWIDTH, N, smoothing=5).with_rabi(0.9661 * RABI / np.sqrt(2)),
         nt.delay(T / 2, N // 2),
-        nt.chirp(T / 2, BANDWIDTH, N // 2, smoothing=5).with_rabi(RABI),
+        chirp(T / 2, BANDWIDTH, N // 2, smoothing=5).with_rabi(RABI),
     ]
 
 
 def main() -> None:
-    correction = nt.phase_correction(
-        sequence(), BANDWIDTH, phase_cycle=nt.CHORUS_CYCLE, degree=10, n_offsets=100
+    correction = phase_correction(
+        sequence(), BANDWIDTH, phase_cycle=CHORUS_CYCLE, degree=10, n_offsets=100
     )
     result = nt.run(
         sequence(correction),
@@ -35,7 +34,7 @@ def main() -> None:
         name="b1_chorus",
         video=False,
         b1=True,
-        phase_cycle=nt.CHORUS_CYCLE,
+        phase_cycle=CHORUS_CYCLE,
         out="output",
     )
     print(*result.files, sep="\n")

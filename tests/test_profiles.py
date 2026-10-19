@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
+from helpers import hard
 
-from nutate import b1_map, hard, plot_b1_map, plot_b1_phase, plot_map, plot_profiles, simulate
+from nutate import b1_map, plot_b1_map, plot_b1_phase, plot_map, plot_profiles, simulate
 
 
 @pytest.fixture

@@ -6,13 +6,14 @@ across ±2 kHz.
 """
 
 import nutate as nt
+from nutate.pulses.swept_frequency import chirp
 
 BANDWIDTH = 20e3
 
 
 def main() -> None:
     sequence = [
-        nt.chirp(10e-3, BANDWIDTH, 500, smoothing=10),
+        chirp(10e-3, BANDWIDTH, 500, smoothing=10),
         nt.delay(10e-3, 500, name="rewind", offset_fn=lambda d: d * (d / (2 * BANDWIDTH) - 0.5)),
     ]
     result = nt.run(

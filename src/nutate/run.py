@@ -14,9 +14,9 @@ from numpy.typing import ArrayLike
 
 from nutate.b1 import B1Map, b1_map, b1_phase_sensitivity
 from nutate.profiles import plot_b1_map, plot_b1_phase
-from nutate.pulses import Segment
 from nutate.render import render, snapshot
 from nutate.render import show as show_scene
+from nutate.segment import Segment
 from nutate.simulate import PhaseCycle, Trajectory, simulate
 
 # video_options that also apply to the still and the interactive viewer.

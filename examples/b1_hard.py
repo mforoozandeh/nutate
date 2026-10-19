@@ -15,7 +15,7 @@ T, BANDWIDTH = 10e-6, 200e3
 def main() -> None:
     cycle = 90.0 * np.arange(4)
     result = nt.run(
-        nt.hard(T, n_steps=1),
+        nt.waveform([1.0], [0.0], duration=T, t90=T, name="hard 90°"),  # one step
         BANDWIDTH,
         name="b1_hard",
         video=False,

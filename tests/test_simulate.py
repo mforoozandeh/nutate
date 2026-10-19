@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
+from helpers import hard
 
-from nutate import PhaseCycle, Segment, delay, hard, simulate, simulate_final
+from nutate import PhaseCycle, Segment, delay, simulate, simulate_final
 
 
 def _rz(a):

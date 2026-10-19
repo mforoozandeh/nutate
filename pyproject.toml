@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "nutate"
 version = "0.1.0.dev0"
-description = "Bloch simulations of RF pulse sequences rendered as 3D Bloch-sphere videos"
+description = "Bloch simulations of any pulse sequence rendered as 3D Bloch-sphere videos"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"

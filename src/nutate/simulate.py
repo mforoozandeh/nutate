@@ -16,7 +16,7 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import ArrayLike
 
-from nutate.pulses import Segment
+from nutate.segment import Segment
 
 
 @dataclass(frozen=True, eq=False)

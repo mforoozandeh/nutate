@@ -11,7 +11,7 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import ArrayLike
 
-from nutate.pulses import Segment
+from nutate.segment import Segment
 from nutate.simulate import PhaseCycle, _check_offsets, simulate_final
 
 

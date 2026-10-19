@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 import nutate as nt
+from nutate.pulses.swept_frequency import CHORUS_CYCLE, chorus
 
 EXAMPLES_DIR = Path(__file__).parent.parent / "examples"
 EXAMPLES = sorted(EXAMPLES_DIR.glob("*.py"))
@@ -14,11 +15,6 @@ EXAMPLES = sorted(EXAMPLES_DIR.glob("*.py"))
 @pytest.mark.render
 @pytest.mark.parametrize("script", EXAMPLES, ids=lambda p: p.stem)
 def test_example_runs(script, tmp_path, monkeypatch):
-    argv = []
-    if script.stem == "bruker_shape":
-        shape = tmp_path / "shape.txt"
-        shape.write_text("##XYPOINTS= (XY..XY)\n" + "100.0, 0.0\n" * 50 + "##END=\n")
-        argv = [str(shape), "1e-3", "250"]
     real_run = nt.run
 
     def quick_run(*args, **kwargs):  # tiny, short renders and an 11 × 11 B1 grid
@@ -28,7 +24,7 @@ def test_example_runs(script, tmp_path, monkeypatch):
         return real_run(*args, video_options=video_options, **kwargs)
 
     monkeypatch.setattr(nt, "run", quick_run)
-    monkeypatch.setattr(sys, "argv", [script.name, *argv])
+    monkeypatch.setattr(sys, "argv", [script.name])
     monkeypatch.chdir(tmp_path)
     runpy.run_path(str(script), run_name="__main__")
 
@@ -49,7 +45,6 @@ def test_all_examples_present():
         "b1_composite",
         "b1_double_chirp",
         "b1_hard",
-        "bruker_shape",
         "chirp",
         "chirp_rewind",
         "chorus",
@@ -71,7 +66,7 @@ def test_epr_phase_paths_skip_receiver_phase(monkeypatch):
 
     monkeypatch.syspath_prepend(str(EXAMPLES_DIR))
     example = importlib.import_module("compressed_chorus_epr")
-    sequence = nt.chorus(200e-9, 100e-9, 200e6, 0.625e-9)
+    sequence = chorus(200e-9, 100e-9, 200e6, 0.625e-9)
     offsets = np.array([-10e6, 0.0, 10e6])
     t, paths = example.phase_paths(sequence, offsets)
     shifted = [replace(s, phase=s.phase + np.pi / 2) for s in sequence]
@@ -119,8 +114,6 @@ def test_b1_examples_pin_constants(monkeypatch, tmp_path):
     import numpy as np
     import pytest as _pytest
 
-    import nutate as nt
-
     approx = _pytest.approx
 
     ex, run = _captured_run(monkeypatch, tmp_path, "b1_hard")
@@ -148,14 +141,14 @@ def test_b1_examples_pin_constants(monkeypatch, tmp_path):
     assert run["sign"] == -1 and _rf_ref(run) == approx(q5)
     assert _peaks(run["sequence"]) == approx([q5 / 4.75, 0.9661 * q5 / np.sqrt(2), 0.0, q5])
     assert [s.duration for s in run["sequence"]] == approx([ex.T, ex.T, ex.T / 2, ex.T / 2])
-    assert run["phase_cycle"] is nt.CHORUS_CYCLE
+    assert run["phase_cycle"] is CHORUS_CYCLE
 
     ex, run = _captured_run(monkeypatch, tmp_path, "b1_abstruse")
     k = [0.61 * np.sqrt(ex.BANDWIDTH / ex.T), 1.83 * np.sqrt(ex.BANDWIDTH / ex.T)]
     k3 = 1.93 * np.sqrt(ex.BANDWIDTH / (ex.T / 2))
     assert run["sign"] == 1 and _rf_ref(run) == approx(k3)
     assert _peaks(run["sequence"]) == approx([*k, 0.0, k3], rel=1e-4)  # sech peak off-grid
-    assert run["phase_cycle"] is nt.CHORUS_CYCLE
+    assert run["phase_cycle"] is CHORUS_CYCLE
 
 
 def test_b1_composite_presets(monkeypatch, tmp_path):

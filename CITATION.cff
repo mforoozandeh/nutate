@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: Nutate
-abstract: Bloch simulations of RF pulse sequences rendered as 3D Bloch-sphere videos.
+abstract: Bloch simulations of any pulse sequence rendered as 3D Bloch-sphere videos.
 authors:
   - family-names: Foroozandeh
     given-names: Mohammadali

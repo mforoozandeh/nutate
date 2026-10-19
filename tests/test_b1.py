@@ -1,16 +1,9 @@
 import numpy as np
 import pytest
+from helpers import hard
 
-from nutate import (
-    COMPOSITE_PRESETS,
-    PhaseCycle,
-    b1_map,
-    b1_phase_sensitivity,
-    composite,
-    hard,
-    simulate_final,
-    waveform,
-)
+from nutate import PhaseCycle, b1_map, b1_phase_sensitivity, simulate_final, waveform
+from nutate.pulses.composite import PRESETS, composite
 
 
 def test_b1_map_hard_pulse_on_resonance():
@@ -23,7 +16,7 @@ def test_b1_map_hard_pulse_on_resonance():
 
 
 def test_b1_map_matches_scaled_simulation():
-    seq = composite(10e-6, *COMPOSITE_PRESETS["4"])
+    seq = composite(10e-6, *PRESETS["4"])
     offsets = np.linspace(-5e4, 5e4, 7)
     scales = np.array([0.8, 1.1])
     bmap = b1_map(seq, offsets, scales, rf_ref=1e4)
@@ -53,7 +46,7 @@ def test_b1_phase_sensitivity_zero_for_hard_pulse():
 def test_b1_phase_sensitivity_definition():
     # Port of the "dphi/dB1 vs B1/B1_opt" sections: on resonance, phase at B1·(1+δ) minus
     # phase at B1·(1−δ), in degrees, wrapped to [−180, 180).
-    seq = composite(10e-6, *COMPOSITE_PRESETS["3"])
+    seq = composite(10e-6, *PRESETS["3"])
     scales = np.array([0.7, 1.0, 1.3])
     d = b1_phase_sensitivity(seq, scales, delta=0.01)
     lo = simulate_final(seq, np.zeros(3), b1=scales * 0.99)

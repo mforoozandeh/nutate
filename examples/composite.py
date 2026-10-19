@@ -8,6 +8,7 @@ was designed for. Choose a preset with --preset.
 import argparse
 
 import nutate as nt
+from nutate.pulses.composite import PRESETS, composite
 
 T90 = 10e-6  # Ω1 = 1/(4·t90) = 25 kHz
 
@@ -18,7 +19,7 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--preset",
-        choices=sorted(nt.COMPOSITE_PRESETS, key=int),
+        choices=sorted(PRESETS, key=int),
         default="9",
         help="composite pulse preset (default: 9)",
     )
@@ -33,9 +34,9 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = _parse_args()
-    flips, phases = nt.COMPOSITE_PRESETS[args.preset]
+    flips, phases = PRESETS[args.preset]
     result = nt.run(
-        nt.composite(T90, flips, phases),
+        composite(T90, flips, phases),
         2 * args.window / (4 * T90),  # ±window·Ω1
         name="composite",
         still=True,

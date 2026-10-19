@@ -1,14 +1,14 @@
 import numpy as np
 import pytest
-
-from nutate import (
+from nutate.pulses.swept_frequency import (
     CHORUS_CYCLE,
     chorus,
     chorus_phase_correction,
     phase_correction,
     q_factor,
-    simulate,
 )
+
+from nutate import simulate
 
 
 def test_chorus_structure():

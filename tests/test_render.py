@@ -6,8 +6,9 @@ import numpy as np
 import PIL.Image
 import pytest
 import pyvista as pv
+from helpers import hard
 
-from nutate import Camera, Style, Trajectory, hard, render, show, simulate, snapshot
+from nutate import Camera, Style, Trajectory, render, show, simulate, snapshot
 from nutate.render import _camera_position, _frame_steps, _offset_indices, _trail_window
 
 

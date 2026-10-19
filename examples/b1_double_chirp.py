@@ -9,6 +9,7 @@ surface and the on-resonance phase sensitivity. Illustrative parameters: T = 1 m
 import numpy as np
 
 import nutate as nt
+from nutate.pulses.swept_frequency import chirp
 
 T, BANDWIDTH, N = 1e-3, 300e3, 1000
 
@@ -16,8 +17,8 @@ T, BANDWIDTH, N = 1e-3, 300e3, 1000
 def main() -> None:
     rabi = np.sqrt(T / 2 * BANDWIDTH * 5 / (2 * np.pi)) / (T / 2)
     sequence = [
-        nt.chirp(T, BANDWIDTH, N, smoothing=5).with_rabi(rabi / 4.75),
-        nt.chirp(T / 2, BANDWIDTH, N // 2, smoothing=5).with_rabi(rabi),
+        chirp(T, BANDWIDTH, N, smoothing=5).with_rabi(rabi / 4.75),
+        chirp(T / 2, BANDWIDTH, N // 2, smoothing=5).with_rabi(rabi),
         nt.delay(T / 2, N // 2),
     ]
     cycle = nt.PhaseCycle(

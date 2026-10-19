@@ -9,6 +9,7 @@ the on-resonance phase sensitivity. Illustrative parameters: T = 1 ms, 300 kHz, 
 import numpy as np
 
 import nutate as nt
+from nutate.pulses.swept_frequency import CHORUS_CYCLE, hs
 
 T, BANDWIDTH, N = 1e-3, 300e3, 1000
 
@@ -16,10 +17,10 @@ T, BANDWIDTH, N = 1e-3, 300e3, 1000
 def main() -> None:
     rf = [k * np.sqrt(BANDWIDTH / d) for k, d in ((0.61, T), (1.83, T), (1.93, T / 2))]
     sequence = [
-        nt.hs(T, BANDWIDTH, N, rabi=rf[0]),
-        nt.hs(T, BANDWIDTH, N, rabi=rf[1], phase_deg=90),
+        hs(T, BANDWIDTH, N, rabi=rf[0]),
+        hs(T, BANDWIDTH, N, rabi=rf[1], phase_deg=90),
         nt.delay(T / 2, N // 2),
-        nt.hs(T / 2, BANDWIDTH, N // 2, rabi=rf[2], phase_deg=90),
+        hs(T / 2, BANDWIDTH, N // 2, rabi=rf[2], phase_deg=90),
     ]
     result = nt.run(
         sequence,
@@ -28,7 +29,7 @@ def main() -> None:
         video=False,
         b1=True,
         sign=1,
-        phase_cycle=nt.CHORUS_CYCLE,
+        phase_cycle=CHORUS_CYCLE,
         out="output",
     )
     print(*result.files, sep="\n")

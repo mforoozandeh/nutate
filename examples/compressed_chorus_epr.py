@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import nutate as nt
+from nutate.pulses.swept_frequency import chorus, chorus_phase_correction
 
 T90, T180, BANDWIDTH, DT = 200e-9, 100e-9, 200e6, 0.625e-9
 COLOURS = ["#2a78d6", "#eb6834", "#1baf7a"]  # first three slots: distinct for colour-blind readers
@@ -30,8 +31,8 @@ def phase_paths(sequence: list[nt.Segment], offsets: np.ndarray) -> tuple[np.nda
 
 
 def main() -> None:
-    correction = nt.chorus_phase_correction(T90, T180, BANDWIDTH, DT, degree=4)
-    sequence = nt.chorus(T90, T180, BANDWIDTH, DT, phase_correction_deg=correction)
+    correction = chorus_phase_correction(T90, T180, BANDWIDTH, DT, degree=4)
+    sequence = chorus(T90, T180, BANDWIDTH, DT, phase_correction_deg=correction)
     out = Path("output")
     out.mkdir(parents=True, exist_ok=True)
 

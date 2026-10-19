@@ -3,8 +3,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import pyvista as pv
+from helpers import hard
 
-from nutate import PhaseCycle, Style, hard, run, waveform
+from nutate import PhaseCycle, Style, run, waveform
 
 T90 = 10e-6
 

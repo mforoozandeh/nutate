@@ -11,23 +11,24 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import nutate as nt
+from nutate.pulses.swept_frequency import CHORUS_CYCLE, chorus, chorus_phase_correction
 
 T90, T180, BANDWIDTH, DT = 2e-3, 1e-3, 300e3, 1e-6
 
 
 def main() -> None:
-    correction = nt.chorus_phase_correction(T90, T180, BANDWIDTH, DT, degree=10)
+    correction = chorus_phase_correction(T90, T180, BANDWIDTH, DT, degree=10)
     band = np.linspace(-BANDWIDTH / 2, BANDWIDTH / 2, 101)
     out = Path("output")
     out.mkdir(parents=True, exist_ok=True)
     for label, corr in (("before", None), ("after", correction)):
-        sequence = nt.chorus(T90, T180, BANDWIDTH, DT, phase_correction_deg=corr)
-        profile = nt.simulate(sequence, band, phase_cycle=nt.CHORUS_CYCLE)
+        sequence = chorus(T90, T180, BANDWIDTH, DT, phase_correction_deg=corr)
+        profile = nt.simulate(sequence, band, phase_cycle=CHORUS_CYCLE)
         fig = nt.plot_profiles(profile)
         fig.savefig(out / f"chorus_profiles_{label}.png", dpi=150)
         plt.close(fig)
 
-    sequence = nt.chorus(T90, T180, BANDWIDTH, DT, phase_correction_deg=correction)
+    sequence = chorus(T90, T180, BANDWIDTH, DT, phase_correction_deg=correction)
     # 6000 steps: a short trail, or 31 offsets × many precession turns become a web.
     result = nt.run(
         sequence,
