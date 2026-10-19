@@ -38,7 +38,7 @@ def test_matches_literal_rotation_matrices():
     for j, d in enumerate(OFFSETS):
         m = np.array([0.0, 0.0, 1.0])
         for k in range(seg.n_steps):
-            m = _rotation_matrix(seg.rf[k], d, seg.phase[k], seg.dt) @ m
+            m = _rotation_matrix(seg.drive[k], d, seg.phase[k], seg.dt) @ m
             np.testing.assert_allclose(traj.m[k + 1, j], m, atol=1e-12)
 
 
@@ -131,7 +131,7 @@ def test_phase_cycle_shape_checks():
         )
 
 
-def test_b1_scales_rf_amplitude():
+def test_b1_scales_drive_amplitude():
     final = simulate([hard(1e-5)], [0.0, 0.0], b1=[0.5, 1.0]).final
     np.testing.assert_allclose(final[0], [0, -np.sin(np.pi / 4), np.cos(np.pi / 4)], atol=1e-9)
     np.testing.assert_allclose(final[1], [0, -1, 0], atol=1e-9)

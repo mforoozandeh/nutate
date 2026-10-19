@@ -12,19 +12,19 @@ def test_b1_map_hard_pulse_on_resonance():
     assert bmap.m.shape == (3, 1, 3)
     np.testing.assert_allclose(bmap.m[:, 0, 1], -np.sin(flips), atol=1e-9)
     np.testing.assert_allclose(bmap.m[:, 0, 2], np.cos(flips), atol=1e-9)
-    assert bmap.rf_ref == pytest.approx(25e3)  # default: the sequence's peak RF
+    assert bmap.rabi_ref == pytest.approx(25e3)  # default: the highest Rabi frequency
 
 
 def test_b1_map_matches_scaled_simulation():
     seq = composite(10e-6, *PRESETS["4"])
     offsets = np.linspace(-5e4, 5e4, 7)
     scales = np.array([0.8, 1.1])
-    bmap = b1_map(seq, offsets, scales, rf_ref=1e4)
+    bmap = b1_map(seq, offsets, scales, rabi_ref=1e4)
     for i, z in enumerate(scales):
         np.testing.assert_allclose(bmap.m[i], simulate_final(seq, offsets, b1=z), atol=1e-12)
     np.testing.assert_array_equal(bmap.offsets, offsets)
     np.testing.assert_array_equal(bmap.scales, scales)
-    assert bmap.rf_ref == 1e4
+    assert bmap.rabi_ref == 1e4
 
 
 def test_b1_map_uses_phase_cycle():
@@ -68,6 +68,6 @@ def test_b1_delta_validation(delta):
         b1_phase_sensitivity([hard(1e-5)], [1.0], delta=delta)
 
 
-def test_b1_map_default_rf_ref_is_rabi():  # not the waveform's peak, which may sit below 1
+def test_b1_map_default_rabi_ref_is_rabi():  # not the waveform's peak, which may sit below 1
     pulse = waveform([0.8, 0.9], [0.0, 0.0], duration=1e-6, rabi=1e4)
-    assert b1_map([pulse], [-1e3, 1e3], [0.9, 1.1]).rf_ref == 1e4
+    assert b1_map([pulse], [-1e3, 1e3], [0.9, 1.1]).rabi_ref == 1e4

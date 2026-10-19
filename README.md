@@ -23,9 +23,9 @@ the ffmpeg binary bundled with `imageio-ffmpeg`; no system ffmpeg or LaTeX neede
 
 ## Quickstart
 
-A generator makes the pulse: a waveform normalised to 1 plus its duration and Rabi
-frequency ν1 (the RF amplitude at waveform value 1). `nt.run` simulates it and writes the
-video and/or the B1 robustness figures.
+A generator makes the pulse: a waveform normalised to 1 plus its duration and Rabi frequency
+ν1 (the drive amplitude, RF or MW, at waveform value 1). `nt.run` simulates it and writes
+the video and/or the B1 robustness figures.
 
 ```python
 import nutate as nt
@@ -60,6 +60,17 @@ p2 = nt.waveform(i=I, q=Q, duration=1e-3, t90=10e-6)
 result = nt.run([p1, p2], 300e3, b1=True, out="output", name="my_pulse")
 ```
 
+### Sequences and delays
+
+A sequence is a list, played back to back. Put `nt.delay(duration, n_steps)` between
+pulses for free precession (no drive); `n_steps` sets how finely the delay is sampled, i.e.
+how smoothly the video shows it.
+
+```python
+sequence = [p1, nt.delay(500e-6, 100), p2]  # p1, 500 µs of free precession, then p2
+nt.run(sequence, 300e3, out="output", name="echo")
+```
+
 ### `nt.run` options
 
 - Offsets span `±bandwidth/2`: `n_offsets` (31) for the video, `b1_offsets` (101) for the
@@ -70,12 +81,12 @@ result = nt.run([p1, p2], 300e3, b1=True, out="output", name="my_pulse")
   - `offsets`: draw only `k` evenly spaced offsets, or given indices
   - `mode`: `"arrows"`, `"ribbon"` (a curve through all tips) or `"both"`
   - `trail`: fading tip trails, as a fraction of the sequence
-  - `inset` / `inset_phase`: RF amplitude (and phase) vs time with a moving cursor
+  - `inset` / `inset_phase`: drive amplitude (and phase) vs time with a moving cursor
   - `theme`: `"light"` (default) or `"dark"`
   - `camera=nt.Camera(orbit=90)`, `style=nt.Style(...)` (colours, sizes, font), `duration`,
     `size`
 - B1 figures plot `−My` by default; `component="z"` for inversion. `b1_scales` (0.5–1.5) and
-  `rf_ref` (the highest ν1, for the `Δ/Ω1(0)` axis) can be changed.
+  `rabi_ref` (the highest ν1, for the `Δ/Ω1(0)` axis) can be changed.
 - The result holds the trajectory, the B1 map, the phase sensitivity and the files written.
 
 ### Lower level
@@ -106,7 +117,7 @@ nt.plot_b1_phase(scales, nt.b1_phase_sensitivity([pulse], scales))
 Sequences whose phase varies quickly across the band, such as a single chirp, need dense
 offsets; `examples/b1_chirp.py` uses 1000, as the original script did.
 
-`simulate(..., b1=...)` scales every RF amplitude (one factor, or one per offset);
+`simulate(..., b1=...)` scales every drive amplitude (one factor, or one per offset);
 `simulate_final` returns only the final states, which keeps large grids small in memory.
 `nutate.pulses.swept_frequency.phase_correction(sequence, bandwidth, ...)` fits the
 first-chirp phase correction for any CHORUS-like sequence.
@@ -139,7 +150,7 @@ folder, `video_options={"theme": "dark"}` for a dark video.
 
 - Rotating frame, no relaxation; initial magnetization `(0, 0, 1)`.
 - Each step rotates the magnetization by `+α = 2π·sqrt(Ω² + Δ²)·dt` (right-handed) about
-  `n = (sinθ cosφ, sinθ sinφ, cosθ)` with `θ = atan2(Ω, Δ)`, for RF amplitude `Ω`
+  `n = (sinθ cosφ, sinθ sinφ, cosθ)` with `θ = atan2(Ω, Δ)`, for drive amplitude `Ω`
   (waveform × ν1), phase `φ` and offset `Δ` — i.e. `Rz(φ)·Ry(θ)·Rz(α)·Ry(−θ)·Rz(−φ)`. So an
   on-resonance 90° pulse with phase 0 takes `z → −y`.
 - Profile phase is `angle(My + i·Mx)`.

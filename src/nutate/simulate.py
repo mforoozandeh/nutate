@@ -178,7 +178,7 @@ def _propagate(
     for i, seg in enumerate(sequence):
         offs = _segment_offsets(seg, offsets)
         segments.append((seg.name, k, k + seg.n_steps))
-        for amp, phase in zip(seg.rf, seg.phase):
+        for amp, phase in zip(seg.drive, seg.phase):
             current = _rotate(_step(amp * b1, phase + pulse_phases[:, i], offs, seg.dt), current)
             k += 1
             if record:
@@ -200,7 +200,7 @@ def simulate(
 
     With ``phase_cycle``, every cycle step is simulated (as one batch), rotated by its
     receiver phase, and the returned trajectory is the mean over the cycle. ``b1`` scales
-    every RF amplitude: a scalar, or one factor per offset.
+    every drive amplitude: a scalar, or one factor per offset.
     """
     return Trajectory(
         *_propagate(sequence, offsets, m0=m0, phase_cycle=phase_cycle, b1=b1, record=True)

@@ -20,7 +20,7 @@ def main() -> None:
         name="b1_chirp",
         video=False,
         b1=True,
-        rf_ref=pulse.rabi,
+        rabi_ref=pulse.rabi,
         # 1000 offsets as in the original script: ~120 phase cycles across the band alias at 101.
         b1_offsets=1000,
         out="output",

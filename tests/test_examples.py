@@ -100,11 +100,11 @@ def _captured_run(monkeypatch, tmp_path, stem):
 
 
 def _peaks(sequence):  # Hz
-    return [s.rf.max() for s in sequence]
+    return [s.drive.max() for s in sequence]
 
 
-def _rf_ref(run):
-    return run["rf_ref"] if run["rf_ref"] is not None else max(s.rabi for s in run["sequence"])
+def _rabi_ref(run):
+    return run["rabi_ref"] if run["rabi_ref"] is not None else max(s.rabi for s in run["sequence"])
 
 
 def test_b1_examples_pin_constants(monkeypatch, tmp_path):
@@ -116,18 +116,18 @@ def test_b1_examples_pin_constants(monkeypatch, tmp_path):
     ex, run = _captured_run(monkeypatch, tmp_path, "b1_hard")
     assert run["b1"] and not run["video"]
     assert run["bandwidth"] == ex.BANDWIDTH and run["b1_offsets"] == 101 and run["sign"] == -1
-    assert _rf_ref(run) == approx(1 / (4 * ex.T))
+    assert _rabi_ref(run) == approx(1 / (4 * ex.T))
     assert run["phase_cycle"].receiver_deg.tolist() == [0, 90, 180, 270]
 
     ex, run = _captured_run(monkeypatch, tmp_path, "b1_chirp")
     q5 = np.sqrt(ex.T * ex.BANDWIDTH * 5 / (2 * np.pi)) / ex.T
     assert run["b1_offsets"] == 1000  # dense: ~120 phase cycles across the band
-    assert run["sign"] == -1 and _rf_ref(run) == approx(q5)
+    assert run["sign"] == -1 and _rabi_ref(run) == approx(q5)
     assert _peaks(run["sequence"]) == approx([q5 / 3.3588])
 
     ex, run = _captured_run(monkeypatch, tmp_path, "b1_double_chirp")
     q5 = np.sqrt(ex.T / 2 * ex.BANDWIDTH * 5 / (2 * np.pi)) / (ex.T / 2)
-    assert run["sign"] == 1 and _rf_ref(run) == approx(q5)
+    assert run["sign"] == 1 and _rabi_ref(run) == approx(q5)
     assert _peaks(run["sequence"]) == approx([q5 / 4.75, q5, 0.0])
     assert [s.duration for s in run["sequence"]] == approx([ex.T, ex.T / 2, ex.T / 2])
     assert run["phase_cycle"].pulse_phases_deg[:, 1].tolist() == [0, 90, 180, 270]
@@ -135,7 +135,7 @@ def test_b1_examples_pin_constants(monkeypatch, tmp_path):
 
     ex, run = _captured_run(monkeypatch, tmp_path, "b1_chorus")
     q5 = np.sqrt(ex.T / 2 * ex.BANDWIDTH * 5 / (2 * np.pi)) / (ex.T / 2)
-    assert run["sign"] == -1 and _rf_ref(run) == approx(q5)
+    assert run["sign"] == -1 and _rabi_ref(run) == approx(q5)
     assert _peaks(run["sequence"]) == approx([q5 / 4.75, 0.9661 * q5 / np.sqrt(2), 0.0, q5])
     assert [s.duration for s in run["sequence"]] == approx([ex.T, ex.T, ex.T / 2, ex.T / 2])
     assert run["phase_cycle"] is CHORUS_CYCLE
@@ -143,20 +143,20 @@ def test_b1_examples_pin_constants(monkeypatch, tmp_path):
     ex, run = _captured_run(monkeypatch, tmp_path, "b1_abstruse")
     k = [0.61 * np.sqrt(ex.BANDWIDTH / ex.T), 1.83 * np.sqrt(ex.BANDWIDTH / ex.T)]
     k3 = 1.93 * np.sqrt(ex.BANDWIDTH / (ex.T / 2))
-    assert run["sign"] == 1 and _rf_ref(run) == approx(k3)
+    assert run["sign"] == 1 and _rabi_ref(run) == approx(k3)
     assert _peaks(run["sequence"]) == approx([*k, 0.0, k3], rel=1e-4)  # sech peak off-grid
     assert run["phase_cycle"] is CHORUS_CYCLE
 
 
-def test_composite_examples_offset_window_in_rf_units(monkeypatch, tmp_path):
+def test_composite_examples_offset_window_in_rabi_units(monkeypatch, tmp_path):
     import pytest as _pytest
 
-    rf = 1 / (4 * 10e-6)  # Ω1 for t90 = 10 µs
+    rabi = 1 / (4 * 10e-6)  # Ω1 for t90 = 10 µs
     _, run = _captured_run(monkeypatch, tmp_path, "composite")
-    assert run["bandwidth"] == _pytest.approx(1.6 * rf) and run["n_offsets"] == 31
-    assert [s.rabi for s in run["sequence"]] == _pytest.approx([rf] * 7)  # preset 9
+    assert run["bandwidth"] == _pytest.approx(1.6 * rabi) and run["n_offsets"] == 31
+    assert [s.rabi for s in run["sequence"]] == _pytest.approx([rabi] * 7)  # preset 9
 
     _, run = _captured_run(monkeypatch, tmp_path, "b1_composite")
-    assert run["bandwidth"] == _pytest.approx(1.6 * rf) and run["b1_offsets"] == 101
-    assert run["sign"] == -1 and _rf_ref(run) == _pytest.approx(rf)
-    assert [s.rabi for s in run["sequence"]] == _pytest.approx([rf] * 7)  # preset 9
+    assert run["bandwidth"] == _pytest.approx(1.6 * rabi) and run["b1_offsets"] == 101
+    assert run["sign"] == -1 and _rabi_ref(run) == _pytest.approx(rabi)
+    assert [s.rabi for s in run["sequence"]] == _pytest.approx([rabi] * 7)  # preset 9

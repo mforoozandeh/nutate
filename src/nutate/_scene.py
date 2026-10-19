@@ -347,7 +347,7 @@ class _Scene:
         return chart
 
     def _add_inset(self, with_phase: bool) -> None:
-        """RF amplitude (and optionally wrapped phase) of the whole sequence, with a cursor."""
+        """Drive amplitude (and optionally wrapped phase) of the whole sequence, with a cursor."""
         # Charts go on an overlay layer: under the main renderer's SSAA pass they would be
         # laid out in the supersampled buffer and come out shrunk and misplaced.
         self._overlay = pv.Renderer(self.plotter)
@@ -357,7 +357,7 @@ class _Scene:
         self.plotter.ren_win.AddRenderer(self._overlay)
         seq = self.traj.sequence
         t = self.traj.t[1:] * self._t_factor
-        amp = np.concatenate([s.rf for s in seq])
+        amp = np.concatenate([s.drive for s in seq])
         a_factor, a_unit = si_scale(amp.max(), "Hz")
         t_label = f"t ({self._t_unit})"
         panels = [(f"B1 ({a_unit})", amp * a_factor)]

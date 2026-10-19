@@ -128,7 +128,7 @@ def render(
     ``size`` is (width, height) in pixels. ``offsets``: ``None`` = all, ``int k`` = k evenly
     spaced, or a sequence of indices. ``mode`` draws arrows, a ribbon through the tips, or
     both; ``trail`` is the fraction of the sequence shown as fading tip trails (0 = off).
-    ``inset`` adds the RF amplitude vs time with a cursor; ``inset_phase`` adds the phase.
+    ``inset`` adds the drive amplitude vs time with a cursor; ``inset_phase`` adds the phase.
     ``theme`` is ``"light"`` or ``"dark"``; ``style`` fine-tunes colours, sizes and font.
     Parent directories are created.
     """

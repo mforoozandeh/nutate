@@ -15,12 +15,12 @@ T, BANDWIDTH, N = 1e-3, 300e3, 1000
 
 
 def main() -> None:
-    rf = [k * np.sqrt(BANDWIDTH / d) for k, d in ((0.61, T), (1.83, T), (1.93, T / 2))]
+    rabis = [k * np.sqrt(BANDWIDTH / d) for k, d in ((0.61, T), (1.83, T), (1.93, T / 2))]
     sequence = [
-        hs(T, BANDWIDTH, N, rabi=rf[0]),
-        hs(T, BANDWIDTH, N, rabi=rf[1], phase_deg=90),
+        hs(T, BANDWIDTH, N, rabi=rabis[0]),
+        hs(T, BANDWIDTH, N, rabi=rabis[1], phase_deg=90),
         nt.delay(T / 2, N // 2),
-        hs(T / 2, BANDWIDTH, N // 2, rabi=rf[2], phase_deg=90),
+        hs(T / 2, BANDWIDTH, N // 2, rabi=rabis[2], phase_deg=90),
     ]
     result = nt.run(
         sequence,

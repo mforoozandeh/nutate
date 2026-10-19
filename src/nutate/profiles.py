@@ -116,7 +116,7 @@ def plot_b1_map(
     """
     if component not in _COMPONENTS:
         raise ValueError(f"component must be one of 'x', 'y', 'z', got {component!r}")
-    x = bmap.offsets / bmap.rf_ref
+    x = bmap.offsets / bmap.rabi_ref
     data = sign * bmap.m[:, :, _COMPONENTS[component]]
     label = f"{'−' if sign < 0 else ''}M{component}"
     if surface:

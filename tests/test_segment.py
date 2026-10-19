@@ -8,7 +8,7 @@ def test_segment_properties():
     s = Segment("x", amp=np.full(4, 0.5), phase=np.zeros(4), dt=1e-6, rabi=10e3)
     assert s.n_steps == 4
     assert s.duration == pytest.approx(4e-6)
-    np.testing.assert_allclose(s.rf, 5e3)  # Hz: amp · rabi
+    np.testing.assert_allclose(s.drive, 5e3)  # Hz: amp · rabi
 
 
 @pytest.mark.parametrize(

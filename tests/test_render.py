@@ -238,7 +238,7 @@ def test_snapshot_step_out_of_range(traj, tmp_path, step):  # traj has 100 steps
 
 
 @pytest.mark.render
-def test_inset_plots_rf_in_hz(traj):  # amp · rabi, not the normalised waveform
+def test_inset_plots_drive_in_hz(traj):  # amp · rabi, not the normalised waveform
     from nutate.render import _make_scene
 
     scene = _make_scene(

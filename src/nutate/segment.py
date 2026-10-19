@@ -2,7 +2,7 @@
 
 Every pulse or delay is a :class:`Segment`: a waveform normalised to 1 and its Rabi
 frequency, i.e. a train of piecewise-constant steps, each with an amplitude (in units of
-the Rabi frequency) and RF phase (rad) held for ``dt`` seconds. :func:`waveform` makes one
+the Rabi frequency) and drive phase (rad) held for ``dt`` seconds. :func:`waveform` makes one
 from your own arrays, :func:`delay` adds free precession. Pulse families (swept-frequency,
 composite) live in :mod:`nutate.pulses`.
 A sequence is a plain ``list[Segment]``.
@@ -25,9 +25,9 @@ class Segment:
     ----------
     name : label shown in videos (e.g. ``"90° chirp"``).
     amp : waveform per step, normalised to 1 (≥ 0; a peak above 1.5 is an error).
-    phase : RF phase per step, rad.
+    phase : drive phase per step, rad.
     dt : step duration, s, > 0.
-    rabi : Rabi frequency ν1, Hz, at waveform value 1 (≥ 0); the RF amplitude is
+    rabi : Rabi frequency ν1, Hz, at waveform value 1 (≥ 0); the drive amplitude is
         ``amp · rabi``.
     offset_fn : optional map applied to the offsets (Hz) while this segment runs;
         ``None`` keeps them unchanged.
@@ -73,8 +73,8 @@ class Segment:
         return self.n_steps * self.dt
 
     @property
-    def rf(self) -> np.ndarray:
-        """RF amplitude per step, Hz: ``amp · rabi``."""
+    def drive(self) -> np.ndarray:
+        """Drive amplitude per step, Hz: ``amp · rabi``."""
         return self.amp * self.rabi
 
     def with_rabi(self, rabi: float) -> Segment:
@@ -89,7 +89,7 @@ def delay(
     name: str = "delay",
     offset_fn: Callable[[np.ndarray], np.ndarray] | None = None,
 ) -> Segment:
-    """Free precession for ``duration`` s in ``n_steps`` equal steps (RF off, ``rabi = 0``)."""
+    """Free precession for ``duration`` s in ``n_steps`` equal steps (no drive, ``rabi = 0``)."""
     return Segment(name, np.zeros(n_steps), np.zeros(n_steps), duration / n_steps, 0.0, offset_fn)
 
 

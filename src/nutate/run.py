@@ -57,7 +57,7 @@ def run(
     b1_scales: ArrayLike | None = None,
     component: Literal["x", "y", "z"] = "y",
     sign: float = -1,
-    rf_ref: float | None = None,
+    rabi_ref: float | None = None,
     phase_cycle: PhaseCycle | None = None,
     video_options: Mapping[str, Any] | None = None,
 ) -> RunResult:
@@ -71,7 +71,7 @@ def run(
     - ``still`` writes ``<name>.png``, the last frame, with the ``video_options`` that apply.
     - ``b1`` writes ``<name>_b1_map.png`` and ``_b1_surface.png`` (``sign · M<component>``
       over the offsets and ``b1_scales``, default 101 scales from 0.5 to 1.5) and
-      ``_b1_phase.png``. ``rf_ref`` (Hz) normalises the offset axis; it defaults to the
+      ``_b1_phase.png``. ``rabi_ref`` (Hz) normalises the offset axis; it defaults to the
       highest Rabi frequency in ``sequence``.
     - ``show`` opens the interactive viewer and the B1 figures instead of writing files.
     """
@@ -107,7 +107,9 @@ def run(
                 size = {"size": options["size"]} if "size" in options else {}
                 files.append(snapshot(trajectory, out / f"{name}.png", **scene, **size))
     if b1:
-        bmap = b1_map(sequence, span(b1_offsets), scales, rf_ref=rf_ref, phase_cycle=phase_cycle)
+        bmap = b1_map(
+            sequence, span(b1_offsets), scales, rabi_ref=rabi_ref, phase_cycle=phase_cycle
+        )
         dphi = b1_phase_sensitivity(sequence, scales, phase_cycle=phase_cycle)
         figures = {
             "map": plot_b1_map(bmap, component, sign=sign),
