@@ -4,6 +4,10 @@ Bloch simulations of any pulse sequence, rendered as 3D Bloch-sphere videos.
 
 ![A composite pulse on the Bloch sphere](https://raw.githubusercontent.com/mforoozandeh/nutate/main/docs/media/composite.webp)
 
+Full-quality video (1080p):
+
+https://github.com/user-attachments/assets/1848f607-e421-4923-b198-bb7745c69010
+
 Nutate takes any pulse, given as a waveform (amplitude and phase, or I and Q) with its
 duration and Rabi frequency, whether it drives nuclear spins (NMR), electron spins (EPR/ESR)
 or a qubit. It simulates the Bloch vector in the rotating frame for many offsets at once,
