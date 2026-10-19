@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
-from nutate.pulses.swept_frequency import chirp, hs, q_factor
 
 from nutate import simulate
+from nutate.pulses.swept_frequency import chirp, hs, q_factor
 
 
 def test_q_factor_90():

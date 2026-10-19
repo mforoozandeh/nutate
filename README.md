@@ -55,7 +55,7 @@ Hz, or give `t90`, the hard 90° pulse length (`rabi = 1/(4·t90)`). Slight over
 is simulated as given; a peak above 1.5 is an error.
 
 ```python
-p1 = nt.waveform(amp, phase, duration=2e-3, rabi=15e3)        # or phase_deg=...
+p1 = nt.waveform(amp, phase, duration=2e-3, rabi=15e3)  # or phase_deg=...
 p2 = nt.waveform(i=I, q=Q, duration=1e-3, t90=10e-6)
 result = nt.run([p1, p2], 300e3, b1=True, out="output", name="my_pulse")
 ```
@@ -93,10 +93,10 @@ profile and time–offset map plots.
 
 ```python
 pulse = nt.waveform([1.0], [0.0], duration=10e-6, t90=10e-6)  # hard 90°, ν1 = 25 kHz
-offsets = np.linspace(-100e3, 100e3, 101)         # Δ/Ω1(0) from −4 to 4
-scales = np.linspace(0.5, 1.5, 101)               # Ω1 / Ω1(0)
+offsets = np.linspace(-100e3, 100e3, 101)  # Δ/Ω1(0) from −4 to 4
+scales = np.linspace(0.5, 1.5, 101)  # Ω1 / Ω1(0)
 bmap = nt.b1_map([pulse], offsets, scales)
-nt.plot_b1_map(bmap, "y", sign=-1)                # contours over Δ/Ω1(0) × Ω1/Ω1(0)
+nt.plot_b1_map(bmap, "y", sign=-1)  # contours over Δ/Ω1(0) × Ω1/Ω1(0)
 nt.plot_b1_map(bmap, "y", sign=-1, surface=True)
 nt.plot_b1_phase(scales, nt.b1_phase_sensitivity([pulse], scales))
 ```

@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
-from nutate.pulses.composite import PRESETS, composite
 
 from nutate import simulate
+from nutate.pulses.composite import PRESETS, composite
 
 
 def test_presets_verbatim():
