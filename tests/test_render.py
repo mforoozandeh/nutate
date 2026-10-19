@@ -69,8 +69,14 @@ def test_snapshot_not_blank(traj, tmp_path):
 @pytest.mark.render
 @pytest.mark.parametrize("theme, corner", [("light", (255, 255, 255)), ("dark", (15, 17, 21))])
 def test_theme_background(traj, tmp_path, theme, corner):
-    img = iio.imread(snapshot(traj, tmp_path / "a.png", size=SMALL, style=Style(theme=theme)))
+    img = iio.imread(snapshot(traj, tmp_path / "a.png", size=SMALL, theme=theme))
     np.testing.assert_allclose(img[2, 2, :3], corner, atol=3)
+
+
+@pytest.mark.render
+def test_unknown_theme(traj, tmp_path):
+    with pytest.raises(ValueError, match="theme"):
+        snapshot(traj, tmp_path / "a.png", size=SMALL, theme="blue")
 
 
 @pytest.mark.render

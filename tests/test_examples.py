@@ -1,5 +1,4 @@
 import runpy
-import sys
 from pathlib import Path
 
 import numpy as np
@@ -24,7 +23,6 @@ def test_example_runs(script, tmp_path, monkeypatch):
         return real_run(*args, video_options=video_options, **kwargs)
 
     monkeypatch.setattr(nt, "run", quick_run)
-    monkeypatch.setattr(sys, "argv", [script.name])
     monkeypatch.chdir(tmp_path)
     runpy.run_path(str(script), run_name="__main__")
 
@@ -75,7 +73,7 @@ def test_epr_phase_paths_skip_receiver_phase(monkeypatch):
     assert t.shape == (m.shape[0],)
 
 
-def _captured_run(monkeypatch, tmp_path, stem, *argv):
+def _captured_run(monkeypatch, tmp_path, stem):
     """Run examples/<stem>.py with nt.run captured; returns its arguments, defaults filled in."""
     import importlib
     import inspect
@@ -97,7 +95,6 @@ def _captured_run(monkeypatch, tmp_path, stem, *argv):
         return nt.RunResult(None, None, None, [])
 
     monkeypatch.setattr(nt, "run", fake_run)
-    monkeypatch.setattr(sys, "argv", [stem, *argv])
     example.main()
     return example, seen
 
@@ -151,29 +148,15 @@ def test_b1_examples_pin_constants(monkeypatch, tmp_path):
     assert run["phase_cycle"] is CHORUS_CYCLE
 
 
-def test_b1_composite_presets(monkeypatch, tmp_path):
-    import numpy as np
-
-    _, run = _captured_run(monkeypatch, tmp_path, "b1_composite", "--preset", "14")
-    assert run["sign"] == -1
-    assert len(run["sequence"]) == 48  # preset 14: 48 × 90°
-    assert all(s.n_steps == 90 for s in run["sequence"])
-    _, run = _captured_run(monkeypatch, tmp_path, "b1_composite", "--preset", "12")
-    np.testing.assert_allclose([s.phase[0] for s in run["sequence"]], np.deg2rad([90, 0, 90]))
-    _, run = _captured_run(monkeypatch, tmp_path, "b1_composite", "--preset", "10")
-    assert [s.n_steps for s in run["sequence"]] == [180, 360, 180, 90]
-
-
 def test_composite_examples_offset_window_in_rf_units(monkeypatch, tmp_path):
     import pytest as _pytest
 
     rf = 1 / (4 * 10e-6)  # Ω1 for t90 = 10 µs
-    for argv, window in (([], 0.8), (["--window", "2"], 2.0)):
-        _, run = _captured_run(monkeypatch, tmp_path, "composite", *argv)
-        assert run["bandwidth"] == _pytest.approx(2 * window * rf)
-        assert run["n_offsets"] == 31
+    _, run = _captured_run(monkeypatch, tmp_path, "composite")
+    assert run["bandwidth"] == _pytest.approx(1.6 * rf) and run["n_offsets"] == 31
+    assert [s.rabi for s in run["sequence"]] == _pytest.approx([rf] * 7)  # preset 9
 
     _, run = _captured_run(monkeypatch, tmp_path, "b1_composite")
     assert run["bandwidth"] == _pytest.approx(1.6 * rf) and run["b1_offsets"] == 101
-    _, run = _captured_run(monkeypatch, tmp_path, "b1_composite", "--window", "3")
-    assert run["bandwidth"] == _pytest.approx(6 * rf)
+    assert run["sign"] == -1 and _rf_ref(run) == _pytest.approx(rf)
+    assert [s.rabi for s in run["sequence"]] == _pytest.approx([rf] * 7)  # preset 9

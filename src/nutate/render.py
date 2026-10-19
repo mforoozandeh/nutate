@@ -118,6 +118,7 @@ def render(
     trail: float = 0.1,
     inset: bool = True,
     inset_phase: bool = False,
+    theme: Literal["light", "dark"] = "light",
     style: Style = Style(),
     camera: Camera = Camera(),
 ) -> Path:
@@ -128,6 +129,7 @@ def render(
     spaced, or a sequence of indices. ``mode`` draws arrows, a ribbon through the tips, or
     both; ``trail`` is the fraction of the sequence shown as fading tip trails (0 = off).
     ``inset`` adds the RF amplitude vs time with a cursor; ``inset_phase`` adds the phase.
+    ``theme`` is ``"light"`` or ``"dark"``; ``style`` fine-tunes colours, sizes and font.
     Parent directories are created.
     """
     path = Path(path)
@@ -147,6 +149,7 @@ def render(
         trail=trail,
         inset=inset,
         inset_phase=inset_phase,
+        theme=theme,
         style=style,
         camera=camera,
     )
@@ -175,6 +178,7 @@ def snapshot(
     trail: float = 0.1,
     inset: bool = True,
     inset_phase: bool = False,
+    theme: Literal["light", "dark"] = "light",
     style: Style = Style(),
     camera: Camera = Camera(),
 ) -> Path:
@@ -195,6 +199,7 @@ def snapshot(
         trail=trail,
         inset=inset,
         inset_phase=inset_phase,
+        theme=theme,
         style=style,
         camera=camera,
     )
@@ -214,6 +219,7 @@ def show(
     trail: float = 0.1,
     inset: bool = True,
     inset_phase: bool = False,
+    theme: Literal["light", "dark"] = "light",
     style: Style = Style(),
     camera: Camera = Camera(),
 ) -> None:
@@ -230,6 +236,7 @@ def show(
         trail=trail,
         inset=inset,
         inset_phase=inset_phase,
+        theme=theme,
         style=style,
         camera=camera,
     )
@@ -241,7 +248,7 @@ def show(
         title="step",
         pointa=(0.05, 0.08),
         pointb=(0.45, 0.08),
-        color=THEMES[style.theme]["text"],
+        color=THEMES[theme]["text"],
         fmt="%.0f",
         interaction_event="always",  # follow the drag, not just the release
     )

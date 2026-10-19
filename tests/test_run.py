@@ -5,7 +5,7 @@ import pytest
 import pyvista as pv
 from helpers import hard
 
-from nutate import PhaseCycle, Style, run, waveform
+from nutate import PhaseCycle, run, waveform
 
 T90 = 10e-6
 
@@ -110,7 +110,7 @@ def test_run_still_uses_scene_options(tmp_path):
         still=True,
         out=tmp_path,
         name="p",
-        video_options={"duration": 0.1, "hold": 0, "size": (320, 240), "style": Style("dark")},
+        video_options={"duration": 0.1, "hold": 0, "size": (320, 240), "theme": "dark"},
     )
     assert result.files == [tmp_path / "p.png"]
     img = iio.imread(result.files[0])

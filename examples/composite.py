@@ -1,47 +1,26 @@
-"""Composite pulses.
+"""Composite pulse.
 
-t90 = 10 µs (Ω1 = 25 kHz); 31 offsets across ±window·Ω1 (--window, default 0.8). A
-composite's behaviour depends only on Δ/Ω1, so keep the window within the range the preset
-was designed for. Choose a preset with --preset.
+Preset 9 of nutate.pulses.composite.PRESETS (119°, 183°, 211°, 384°, 211°, 183°, 119° at
+alternating phases) built on a 10 µs 90° pulse, which sets the Rabi frequency
+1/(4·t90) = 25 kHz; 31 offsets across ±0.8·ν1.
 """
-
-import argparse
 
 import nutate as nt
 from nutate.pulses.composite import PRESETS, composite
 
-T90 = 10e-6  # Ω1 = 1/(4·t90) = 25 kHz
-
-
-def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "--preset",
-        choices=sorted(PRESETS, key=int),
-        default="9",
-        help="composite pulse preset (default: 9)",
-    )
-    parser.add_argument(
-        "--window",
-        type=float,
-        default=0.8,
-        help="offsets span ±window·Ω1 (default: 0.8)",
-    )
-    return parser.parse_args()
+T90 = 10e-6
 
 
 def main() -> None:
-    args = _parse_args()
-    flips, phases = PRESETS[args.preset]
+    pulse = composite(T90, *PRESETS["9"])
+    rabi = 1 / (4 * T90)
     result = nt.run(
-        composite(T90, flips, phases),
-        2 * args.window / (4 * T90),  # ±window·Ω1
+        pulse,
+        1.6 * rabi,
         name="composite",
         still=True,
         out="output",
-        video_options={"inset_phase": True},
+        video_options={"inset_phase": True, "theme": "dark"},
     )
     print(*result.files, sep="\n")
 

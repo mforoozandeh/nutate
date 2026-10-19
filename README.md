@@ -71,7 +71,9 @@ result = nt.run([p1, p2], 300e3, b1=True, out="output", name="my_pulse")
   - `mode`: `"arrows"`, `"ribbon"` (a curve through all tips) or `"both"`
   - `trail`: fading tip trails, as a fraction of the sequence
   - `inset` / `inset_phase`: RF amplitude (and phase) vs time with a moving cursor
-  - `style=nt.Style(theme="dark")`, `camera=nt.Camera(orbit=90)`, `duration`, `size`
+  - `theme`: `"light"` (default) or `"dark"`
+  - `camera=nt.Camera(orbit=90)`, `style=nt.Style(...)` (colours, sizes, font), `duration`,
+    `size`
 - B1 figures plot `−My` by default; `component="z"` for inversion. `b1_scales` (0.5–1.5) and
   `rf_ref` (the highest ν1, for the `Δ/Ω1(0)` axis) can be changed.
 - The result holds the trajectory, the B1 map, the phase sensitivity and the files written.
@@ -115,7 +117,7 @@ Each script generates its pulses and passes them to `nt.run`. Video scripts writ
 `output/<name>.mp4` and `.png`; the `b1_*` scripts (and `waveform.py`) write
 `output/<name>_b1_map.png`, `_b1_surface.png` and `_b1_phase.png`. To change what they
 produce, edit the `nt.run` call: `show=True` for interactive windows, `out=` for another
-folder, `video_options={"style": nt.Style(theme="dark")}` for a dark video.
+folder, `video_options={"theme": "dark"}` for a dark video.
 
 | Example | Shows |
 |---|---|

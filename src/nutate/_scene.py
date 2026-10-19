@@ -40,10 +40,9 @@ _VIEW_ANGLE = 25.0
 
 @dataclass(frozen=True)
 class Style:
-    """Look of the scene. ``cmap=None`` takes the theme's default; ``color`` paints every
-    arrow one colour (no colorbar)."""
+    """Fine-tuning of the scene's look. ``cmap=None`` takes the theme's default; ``color``
+    paints every arrow one colour (no colorbar)."""
 
-    theme: Literal["light", "dark"] = "light"
     cmap: str | None = None
     color: str | None = None
     sphere_opacity: float = 0.12
@@ -52,10 +51,6 @@ class Style:
     arrow_tip_radius: float = 0.05
     arrow_tip_length: float = 0.15
     line_width: float = 3.0
-
-    def __post_init__(self) -> None:
-        if self.theme not in THEMES:
-            raise ValueError(f"theme must be one of {sorted(THEMES)}, got {self.theme!r}")
 
 
 @dataclass(frozen=True)
@@ -136,11 +131,14 @@ class _Scene:
         offsets: np.ndarray,
         style: Style,
         camera: Camera,
+        theme: Literal["light", "dark"] = "light",
         mode: Literal["arrows", "ribbon", "both"] = "arrows",
         trail: float = 0.1,
         inset: bool = True,
         inset_phase: bool = False,
     ) -> None:
+        if theme not in THEMES:
+            raise ValueError(f"theme must be one of {sorted(THEMES)}, got {theme!r}")
         if mode not in ("arrows", "ribbon", "both"):
             raise ValueError(f"mode must be 'arrows', 'ribbon' or 'both', got {mode!r}")
         if not 0 <= trail <= 1:
@@ -154,7 +152,7 @@ class _Scene:
         self.camera = camera
         self.mode = mode
         self.trail = trail
-        self.theme = THEMES[style.theme]
+        self.theme = THEMES[theme]
         height = plotter.window_size[1]
         self._font_size = max(8, round(24 * height / 1080))
 

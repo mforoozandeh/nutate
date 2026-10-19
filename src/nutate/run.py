@@ -20,7 +20,7 @@ from nutate.segment import Segment
 from nutate.simulate import PhaseCycle, Trajectory, simulate
 
 # video_options that also apply to the still and the interactive viewer.
-_SCENE_OPTIONS = ("offsets", "mode", "trail", "inset", "inset_phase", "style", "camera")
+_SCENE_OPTIONS = ("offsets", "mode", "trail", "inset", "inset_phase", "theme", "style", "camera")
 
 
 @dataclass(frozen=True, eq=False)
