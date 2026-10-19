@@ -2,7 +2,7 @@
 
 Bloch simulations of any pulse sequence, rendered as 3D Bloch-sphere videos.
 
-![Chirp excitation on the Bloch sphere](https://raw.githubusercontent.com/mforoozandeh/nutate/main/docs/media/chirp.gif)
+![A composite pulse on the Bloch sphere](https://raw.githubusercontent.com/mforoozandeh/nutate/main/docs/media/composite.webp)
 
 Nutate takes any pulse, given as a waveform (amplitude and phase, or I and Q) with its
 duration and Rabi frequency, whether it drives nuclear spins (NMR), electron spins (EPR/ESR)
