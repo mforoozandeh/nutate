@@ -158,8 +158,13 @@ class _Scene:
 
         factor, self._offset_unit = si_scale(np.abs(traj.offsets).max(), "Hz")
         self._offset_values = traj.offsets[self.idx] * factor
-        limit = np.abs(traj.offsets).max() * factor
-        self._clim = (-limit, limit) if limit > 0 else (-1.0, 1.0)
+        lo, hi = traj.offsets.min() * factor, traj.offsets.max() * factor
+        if lo < hi and (lo >= 0 or hi <= 0):
+            # All on one side of resonance: their own range, so no colours go unused.
+            self._clim = (lo, hi)
+        else:
+            limit = max(-lo, hi)
+            self._clim = (-limit, limit) if limit > 0 else (-1.0, 1.0)
         self._cmap = style.cmap or self.theme["cmap"]
         if style.color is not None:
             rgb = np.tile(mcolors.to_rgb(style.color), (self.idx.size, 1))

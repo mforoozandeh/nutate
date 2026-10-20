@@ -258,3 +258,55 @@ def test_inset_plots_drive_in_hz(traj):  # amp · rabi, not the normalised wavef
         assert chart.y_range == pytest.approx([0.0, 1.1 * 25.0])  # hard 10 µs 90°: 25 kHz
     finally:
         scene.plotter.close()
+
+
+def _colour_scene(offsets, size=SMALL):
+    from nutate.render import _make_scene
+
+    t = simulate([hard(10e-6, n_steps=20)], offsets)
+    return _make_scene(
+        t,
+        size,
+        None,
+        mode="arrows",
+        trail=0.1,
+        inset=False,
+        inset_phase=False,
+        style=Style(),
+        camera=Camera(),
+    )
+
+
+@pytest.mark.render
+@pytest.mark.parametrize(
+    "offsets, clim",
+    [
+        (np.linspace(-5e4, 5e4, 5), (-50.0, 50.0)),  # crosses zero: symmetric
+        (np.linspace(-1e4, 5e4, 5), (-50.0, 50.0)),
+        (np.linspace(2e4, 6e4, 5), (20.0, 60.0)),  # one side: the offsets' own range
+        (np.linspace(-6e4, -2e4, 5), (-60.0, -20.0)),
+        (np.linspace(0.0, 6e4, 5), (0.0, 60.0)),
+        ([3e4], (-30.0, 30.0)),  # a single offset keeps a symmetric bar
+        ([0.0], (-1.0, 1.0)),
+    ],
+)
+def test_colour_range(offsets, clim):
+    scene = _colour_scene(offsets)
+    try:
+        assert scene._clim == pytest.approx(clim)  # kHz
+    finally:
+        scene.plotter.close()
+
+
+@pytest.mark.render
+def test_one_sided_offsets_use_the_whole_colour_map():
+    """Offsets 20–60 kHz: the lowest and highest get the colour map's two ends."""
+    import matplotlib as mpl
+
+    scene = _colour_scene(np.linspace(2e4, 6e4, 5))
+    try:
+        cmap = mpl.colormaps[scene._cmap]
+        np.testing.assert_allclose(scene._rgb[0], 255 * np.array(cmap(0.0)[:3]))
+        np.testing.assert_allclose(scene._rgb[-1], 255 * np.array(cmap(1.0)[:3]))
+    finally:
+        scene.plotter.close()

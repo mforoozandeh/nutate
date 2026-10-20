@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- The offset colour bar spans the offsets' own range when they all lie on one side of
+  resonance (e.g. 7.5–12.5 MHz), instead of a scale symmetric about zero that left half
+  the colours unused. Sweeps that cross zero keep the symmetric scale.
+
 ## [0.1.0] - 2026-10-19
 
 First release.
